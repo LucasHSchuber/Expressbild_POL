@@ -35,33 +35,72 @@ db.getConnection((err, connection) => {
 
 // get all tags
 app.get("/test", (req, res) => {
-  console.log('Fetching test...');
+  console.log('Fetching /test...');
   res.json({ message: 'Test data received!' }); // Example response
 
 
 })
 
-// // get all tags}
-// app.get("/api/articles/tags", (req, res) => {
-//   console.log('Fetching tags...');
-//   console.log('GET request received at /api/articles/tags');
+// get data (from eb_logs, net_orders,, ned products in JOIN)
+// ..över beställningar utan poststämpel (net_orders.posted IS NULL) som skapades från och med 2024-05-01 (net_orders.inserted >= '2024-05-01') och som inte har uppdaterats på en vecka.
+// .. För att se om en beställning inte har uppdateras på en vecka så kan man kolla eb_logs.updated. Beställningarna i listan skall inte vara postade (net_orders.posted IS NULL), inte makulerade (net_orders.cancelled IS NULL), inte markerade för "recopy" (eb_logs.qc_recopy IS NULL), (net_orders.pol_fixed IS NULL) och de skall ha ett pris (net_orders.baseprice > 0)
+app.get("/api/alldata", (req, res) => {
+  console.log('Fetching /alldata...');
 
-//   const getQuery = `
-//  SELECT DISTINCT t.tag 
-//   FROM kb_article_tags t
-//   INNER JOIN kb_articles a ON t.article_id = a.id
-//   WHERE a.deleted IS NULL;
-// `;
+    // Calculate the date for one week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); 
+    const formattedDate = oneWeekAgo.toISOString().split('T')[0]; 
+    console.log(formattedDate);
 
-//   db.query(getQuery, (error, results) => {
-//     if (error) {
-//       console.error('SQL error:', error);
-//       return res.status(500).json({ error: 'An error occurred while fetching the tags.' });
-//     }
-//     const tags = results.map(row => row.tag);
-//     res.status(200).json({ tags, status: 200 });
-//   });
-// });
+  const getQuery = `
+  SELECT 
+      o.orderuuid,
+      o.portaluuid, 
+      o.paid, 
+      o.inserted,
+      o.originating,
+      np.cnt,
+      l.updated 
+  FROM 
+      eb_logs AS l 
+  JOIN 
+      net_orders AS o 
+      ON o.orderuuid = l.orderuuid 
+  LEFT JOIN (
+      SELECT 
+          orderuuid, 
+          COUNT(id) AS cnt 
+      FROM 
+          net_products 
+      WHERE 
+          return_factor != 1 
+      GROUP BY 
+          orderuuid
+  ) AS np 
+      ON np.orderuuid = l.orderuuid 
+  WHERE 
+      l.qc_recopy IS NULL 
+      AND o.posted IS NULL 
+      AND o.baseprice > 0 
+      AND o.cancelled IS NULL 
+      AND l.updated < ?
+      AND o.inserted > '2024-05-01'  
+  ORDER BY 
+      l.inserted
+`;
+
+  db.query(getQuery, [formattedDate], (error, results) => {
+    if (error) {
+      console.error('SQL error:', error);
+      return res.status(500).json({ error: 'An error occurred while fetching the alldata from eb_logs, net_orders & net_products.' });
+    }
+    const alldata = results.map(row => ({
+        ...row
+    }));
+    res.status(200).json({ data: alldata, status: 200 });
+  });
+});
 
 
 
