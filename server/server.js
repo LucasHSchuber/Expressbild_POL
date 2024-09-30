@@ -57,10 +57,10 @@ app.get("/api/alldata", (req, res) => {
   SELECT 
       o.orderuuid,
       o.portaluuid, 
-      o.paid, 
+      o.paid,
+      np.cnt, 
       o.inserted,
       o.originating,
-      np.cnt,
       l.updated 
   FROM 
       eb_logs AS l 
@@ -83,7 +83,8 @@ app.get("/api/alldata", (req, res) => {
       l.qc_recopy IS NULL 
       AND o.posted IS NULL 
       AND o.baseprice > 0 
-      AND o.cancelled IS NULL 
+      AND o.cancelled IS NULL
+      AND o.pol_fixed IS NULL 
       AND l.updated < ?
       AND o.inserted > '2024-05-01'  
   ORDER BY 
@@ -101,6 +102,31 @@ app.get("/api/alldata", (req, res) => {
     res.status(200).json({ data: alldata, status: 200 });
   });
 });
+
+
+app.post('/api/flag', (req, res) => {
+    const { orderuuid } = req.body;
+    console.log("Retrieved orderuuid: ", orderuuid);
+
+    if (!orderuuid) {
+        return res.status(400).json({ error: 'Orderuuid is required.' });
+    }
+
+    const updateFlagQuery = `
+        UPDATE net_orders 
+        SET pol_flag = NOW() 
+        WHERE orderuuid IN (?)
+    `
+
+    db.query(updateFlagQuery, [orderuuid], (error, results) => {
+        if (error) {
+          console.error('SQL error:', error);
+          return res.status(500).json({ error: 'An error occurred while setting the pol_flag in net_orders.' });
+        }
+        res.status(200).json({ updated: orderuuid, status: 'success' });
+      });
+
+})
 
 
 

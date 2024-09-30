@@ -20,24 +20,22 @@ html, .wrapper{
 
 
 /* TABLE */
-/* .table-wrapper{
-    border: 2px solid black;
-    border-radius: 25px;
-    padding: 2em;
-    width: fit-content !important;
-    box-shadow: 0 3px 5px 3px rgba(0, 0, 0, 0.1);
-    margin-top: 3em;
-} */
+.content-wrapper{
+    display: flex;
+}
+
 .table{
-    font-size: 0.75em;
-    /* width: fit-content !important; */
+    font-size: 0.8em;
+    width: fit-content !important;
     /* max-width: 65% !important;  */
     max-height: 40em !important;
     min-height: 40em !important;
     overflow: auto;
     display: block;
     border: 2px solid black;
-    border-radius: 25px;
+    /* border-radius: 25px; */
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
     padding: 0 3em 2em 3em;
     box-shadow: 0 3px 5px 3px rgba(0, 0, 0, 0.1);
     /* scrollbar-width: none; */
@@ -46,12 +44,65 @@ html, .wrapper{
     min-width: 100% !important;
 }
 .table-row:hover{
-    background-color: rgb(33, 33, 33);
+    background-color: rgb(34, 34, 34);
     cursor: pointer;
 }
-.selected-data-box{
-    padding: 1em 2em;
+.selected-row{
+    background-color: rgb(22, 22, 22);
+}
+.selected-data-box{ 
+    background-color: rgb(40, 40, 40);
+    width: 40%;
+    height: fit-content;
+    padding: 2em 1.5em 4em 1.5em;
     border-left: 2px solid black;
+}
+.selected-data-box h6{ 
+    font-size: 0.9em;
+}
+
+/* status */
+.status-green{
+    color: rgb(0, 231, 0);
+    animation: blurGreen 2s infinite alternate;
+}
+@keyframes blurGreen {
+    0% {
+        box-shadow: 0 0 10px rgba(0, 234, 0, 0.6);
+        filter: blur(1px) ;
+    }
+    100% {
+        box-shadow:0 0 20px rgba(0, 234, 0, 1);
+        filter: blur(2px) ;
+    }
+}
+.status-yellow{
+    color: rgb(255, 206, 12);
+    animation: blurYellow 2s infinite alternate;
+}
+@keyframes blurYellow {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 206, 12, 0.6);
+        filter: blur(1px) ;
+    }
+    100% {
+        box-shadow:0 0 20px rgba(255, 206, 12, 1);
+        filter: blur(2px) ;
+    }
+}
+.status-red{
+    color: rgb(255, 22, 22);
+    animation: blurRed 2s infinite alternate;
+}
+@keyframes blurRed {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 22, 22, 0.6);
+        filter: blur(1px) ;
+    }
+    100% {
+        box-shadow:0 0 20px rgba(255, 22, 22, 1);
+        filter: blur(2px) ;
+    }
 }
 
 /* Scrollbar style */
@@ -72,3 +123,18 @@ html, .wrapper{
   ::-webkit-scrollbar-thumb:hover {
     background: #555;
   }
+
+
+  @media screen and (max-width: 999px) {
+    .content-wrapper{
+        display: grid;
+    }
+    .table{
+        font-size: 0.7em;
+    }
+    .selected-data-box{
+        width: 90%;
+        padding: 1em 0;
+        border-left: none;
+    }
+}
