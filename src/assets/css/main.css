@@ -30,9 +30,8 @@ html, .wrapper{
 } */
 .table{
     font-size: 0.75em;
-    width: fit-content !important;
-    width: fit-content !important;
-    max-width: 65% !important; 
+    /* width: fit-content !important; */
+    /* max-width: 65% !important;  */
     max-height: 40em !important;
     min-height: 40em !important;
     overflow: auto;
@@ -42,7 +41,6 @@ html, .wrapper{
     padding: 0 3em 2em 3em;
     box-shadow: 0 3px 5px 3px rgba(0, 0, 0, 0.1);
     /* scrollbar-width: none; */
-    margin-top: 5em;
 }
 .table thead{
     min-width: 100% !important;
@@ -51,6 +49,12 @@ html, .wrapper{
     background-color: rgb(33, 33, 33);
     cursor: pointer;
 }
+.selected-data-box{
+    padding: 1em 2em;
+    border-left: 2px solid black;
+}
+
+/* Scrollbar style */
 /* width */
 ::-webkit-scrollbar {
     width: 10px;

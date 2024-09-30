@@ -1,0 +1,21 @@
+/* BUTTONS CSS */
+
+.delete-selecteddata-button{
+    padding: 0.5em 0.6em;
+    margin-top: -0.4em !important;
+    border-radius: 50%;
+    background-color: transparent;
+    cursor: pointer;
+}
+.delete-selecteddata-button:hover{
+    background-color: rgb(26, 26, 26);
+}
+
+.delete-all-button{
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.delete-all-button:hover{
+    color: rgb(188, 188, 188) !important;
+}
