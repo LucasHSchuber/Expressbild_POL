@@ -17,26 +17,33 @@ html, .wrapper{
     font-weight: 400;
 }
 
+@media screen and (max-width: 1000px) {
+    .wrapper{
+        padding: 3em 2em;
+    }
+
+}
 
 
-/* TABLE */
+
+/* MAIN TABLE */
 .content-wrapper{
     display: flex;
 }
 
 .table{
     font-size: 0.8em;
-    width: fit-content !important;
+    width: 100% !important;
     /* max-width: 65% !important;  */
-    max-height: 40em !important;
-    min-height: 40em !important;
+    max-height: 45em !important;
+    min-height: 45em !important;
     overflow: auto;
     display: block;
     border: 2px solid black;
     /* border-radius: 25px; */
     border-top-left-radius: 20px;
     border-bottom-left-radius: 20px;
-    padding: 0 3em 2em 3em;
+    padding: 0 2em 2em 2em;
     box-shadow: 0 3px 5px 3px rgba(0, 0, 0, 0.1);
     /* scrollbar-width: none; */
 }
@@ -44,17 +51,18 @@ html, .wrapper{
     min-width: 100% !important;
 }
 .table-row:hover{
-    background-color: rgb(34, 34, 34);
+    background-color: rgb(12, 12, 12);
     cursor: pointer;
 }
 .selected-row{
-    background-color: rgb(22, 22, 22);
+    background-color: rgb(28, 28, 28);
 }
 .selected-data-box{ 
     background-color: rgb(40, 40, 40);
-    width: 40%;
+    width: 100%;
     height: fit-content;
     padding: 2em 1.5em 4em 1.5em;
+    margin: 0 0 0 3em;
     border-left: 2px solid black;
 }
 .selected-data-box h6{ 
@@ -125,16 +133,59 @@ html, .wrapper{
   }
 
 
-  @media screen and (max-width: 999px) {
+  
+
+/* FLAG LOG TABLE */
+ .log-wrapper{
+    margin: 0 0 0 3em;
+    height: 30em !important;
+ }
+ .log-box{
+    margin: 1em 0;
+ }
+ .log-button-box{
+    margin: 2em 0 0 0;
+ }
+ .log-table {
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  
+  .log-table th, .log-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.392);
+    padding: 5px 10px;
+    text-align: left;
+  }
+
+
+
+  @media screen and (max-width: 1500px) {
     .content-wrapper{
         display: grid;
     }
     .table{
         font-size: 0.7em;
+        width: fit-content !important;
+        max-height: 40em !important;
+        min-height: 40em !important;
+        margin-left: 20%;
     }
     .selected-data-box{
-        width: 90%;
-        padding: 1em 0;
+        width: 100%;
+        padding: 1em 2em;
         border-left: none;
+        margin: 0;
+        margin-top: 1.2em;
     }
 }
+@media screen and (max-width: 1000px) {
+    .table{
+        margin-left: 2% !important;
+        font-size: 0.6em;
+    }
+    .selected-data-box h6{
+        font-size: 0.8em;
+    }
+
+}
+

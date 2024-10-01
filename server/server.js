@@ -104,6 +104,7 @@ app.get("/api/alldata", (req, res) => {
 });
 
 
+// POST route to set pol_flag in net_orders
 app.post('/api/flag', (req, res) => {
     const { orderuuid } = req.body;
     console.log("Retrieved orderuuid: ", orderuuid);
@@ -121,13 +122,67 @@ app.post('/api/flag', (req, res) => {
     db.query(updateFlagQuery, [orderuuid], (error, results) => {
         if (error) {
           console.error('SQL error:', error);
-          return res.status(500).json({ error: 'An error occurred while setting the pol_flag in net_orders.' });
+          return res.status(500).json({ error: 'An error occurred while setting the pol_flag in net_orders.', message: "Error", timestamp: currentTime, statuscode: 500, updated: orderuuid });
         }
-        res.status(200).json({ updated: orderuuid, status: 'success' });
+        const currentTime = new Date().toLocaleTimeString();
+        res.status(200).json({ updated: orderuuid, statuscode: 200, message: 'Flag set', timestamp: currentTime });
+      });
+})
+
+
+// POST route to set pol_fixed in net_orders
+app.post('/api/fixed', (req, res) => {
+    const { orderuuid } = req.body;
+    console.log("Retrieved orderuuid: ", orderuuid);
+
+    if (!orderuuid) {
+        return res.status(400).json({ error: 'Orderuuid is required.' });
+    }
+
+    const updateFlagQuery = `
+        UPDATE net_orders 
+        SET pol_fixed = NOW() 
+        WHERE orderuuid IN (?)
+    `
+
+    db.query(updateFlagQuery, [orderuuid], (error, results) => {
+        if (error) {
+          console.error('SQL error:', error);
+          return res.status(500).json({ error: 'An error occurred while setting the pol_fixed in net_orders.', message: "Error", timestamp: currentTime, statuscode: 500, updated: orderuuid });
+        }
+        const currentTime = new Date().toLocaleTimeString();
+        res.status(200).json({ updated: orderuuid, statuscode: 200, message: 'Fixed set', timestamp: currentTime });
       });
 
 })
 
+
+
+// POST route to set cancelled in net_orders
+app.post('/api/cancel', (req, res) => {
+  const { orderuuid } = req.body;
+  console.log("Retrieved orderuuid: ", orderuuid);
+
+  if (!orderuuid) {
+      return res.status(400).json({ error: 'Orderuuid is required.' });
+  }
+
+  const updateFlagQuery = `
+      UPDATE net_orders 
+      SET cancelled = NOW() 
+      WHERE orderuuid IN (?)
+  `
+
+  db.query(updateFlagQuery, [orderuuid], (error, results) => {
+      if (error) {
+        console.error('SQL error:', error);
+        return res.status(500).json({ error: 'An error occurred while setting cancellled in net_orders.', message: "Error", timestamp: currentTime, statuscode: 500, updated: orderuuid });
+      }
+      const currentTime = new Date().toLocaleTimeString();
+      res.status(200).json({ updated: orderuuid, statuscode: 200, message: 'Cancelled set', timestamp: currentTime });
+    });
+
+})
 
 
 

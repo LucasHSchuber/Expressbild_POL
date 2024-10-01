@@ -1,0 +1,28 @@
+/* Spinner.css */
+.spinner-container {
+  display: flex;
+  position: fixed;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh; /* Full screen height */
+  width: 45em;
+}
+
+.spinner {
+  border: 8px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #3498db; /* Spinner color */
+  border-radius: 50%;
+  width: 50px; /* Spinner size */
+  height: 50px; /* Spinner size */
+  animation: spin 1s linear infinite; /* Spin animation */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

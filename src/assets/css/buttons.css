@@ -7,6 +7,7 @@
     border: none;
     box-shadow: 1px 1px 5px 3px rgba(201, 201, 201, 0.2);
     cursor: pointer;
+    font-weight: 600;
 }
 .button:hover{
     background-color: rgb(26, 26, 26);
@@ -53,8 +54,39 @@
     background-color: transparent;
 }
 .table-button:hover{
-    background-color: rgb(0, 0, 0);
+    background-color: rgb(213, 213, 213);
+    color: rgb(49, 49, 49);
+}
+.table-button:hover .table-icon{
+    background-color: rgb(213, 213, 213);
+    color: rgb(49, 49, 49);
 }
 .table-button-flag{
     color: rgb(223, 223, 223);
+}
+
+
+/* LOG BUTTONS */
+.log-button{
+    background-color: rgb(21, 21, 21);
+    color: rgb(224, 224, 224);
+    border: none;
+    padding: 0.7em 1em;
+    margin-right: 0.2em;
+    cursor: pointer;
+    font-size: 0.8em;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.log-button:hover{
+    background-color: rgb(39, 39, 39);
+
+}
+
+
+
+@media screen and (max-width: 1000px) {
+    .button{
+        padding: 0.7em 1.2em;
+    }
+
 }

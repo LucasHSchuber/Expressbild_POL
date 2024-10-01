@@ -16,6 +16,10 @@ dist-ssr
 server/dbConfig.js
 server/dbConfig.js
 /server/dbConfig.js
+# src/env.js
+env.js
+apiConfig.js
+.env
 
 # Editor directories and files
 .vscode/*

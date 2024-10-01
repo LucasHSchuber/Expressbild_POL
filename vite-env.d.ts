@@ -19,4 +19,8 @@ declare module '*.svg' {
     export default content;
   }
   
-  
+  // env.d.ts
+  declare module '*.js' {
+    const content: any;
+    export default content;
+  }
