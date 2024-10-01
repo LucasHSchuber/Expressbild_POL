@@ -44,10 +44,14 @@ interface ExternalLogEntry {
   statuscode: number
 }
 interface CancelLogEntry {
-  message: string,
-  updated: string,
-  timestamp: string,
-  statuscode: number
+  cancelResponse: {
+    message: string;
+    statuscode: number;
+    orderuuid: string;
+    timestamp: string;
+    updated: string;
+  } | undefined;    
+  statusResponse: string;
 }
 interface TokenEntry {
   token: string,
@@ -245,7 +249,7 @@ const Index = () => {
 
       const runFlag = async () => {
         console.log("Flag method triggered...");
-        const confirm = window.confirm(`Are you sure you want to flag all ${selectedData.length} orders?`);
+        const confirm = window.confirm(`Are you sure you want to flag ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
@@ -269,10 +273,12 @@ const Index = () => {
               const flagLog = responses.map(data => data.data);
               toast.success("Successfully flagged all orders");
               setFlagLog(flagLog);
+              setShowFlagLog(true);
+              setShowExternalLog(false);
+              setShowCancelLog(false);
           } catch (error) {
               console.error('Error flagging projects:', error);
-              toast.error('An error occurred while Flagging the orders');
-
+              toast.error('An error occurred while flagging the orders');
           }
         }
       }
@@ -299,11 +305,14 @@ const Index = () => {
                 });
                 // Handle responses if necessary
               console.log('All projects flagged successfully:', response);
-              toast.success("Successfully ran External on order");
+              toast.success("Successfully ran external on order");
               setExternalLog((prevExternalLog) => [...prevExternalLog, response.data]);
+              setShowExternalLog(true);
+              setShowCancelLog(false);
+              setShowFlagLog(false);
           } catch (error) {
               console.error('Error flagging projects:', error);
-              toast.error('An error occurred while running the External method');
+              toast.error('An error occurred while running external on order');
 
           }
       }
@@ -314,19 +323,17 @@ const Index = () => {
 
       const runCancel = async () => {
         console.log("Cancel method triggered...");
-        const confirm = window.confirm(`Are you sure you want to Cancel all ${selectedData.length} orders?`);
+        const confirm = window.confirm(`Are you sure you want to Cancel ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
           console.log('triggered!');
-
-          // Update netlife through REST API
           // Update net_orders
           try {
               // Use Promise.all to handle multiple requests concurrently
-              const responses = await Promise.all(selectedData.map(order => {
+              const responses = await Promise.all(selectedData.map(async (order) => {
                   console.log('order', order.orderuuid);
-                  return axios.post(`${ENV.API_URL}api/cancel`, {
+                  const cancelResponse = await axios.post(`${ENV.API_URL}api/cancel`, {
                       orderuuid: order.orderuuid
                   }, {
                       headers: {
@@ -334,17 +341,87 @@ const Index = () => {
                           'Content-Type': 'application/json',
                       }
                   });
+                  console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
+                   // Update netlife through REST API
+                   let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                   console.log('order.orderuuid', order.orderuuid);
+                   try {
+                    console.log('sending orderuuid to netlife api: ', order_uuid );
+                    const statusResponse = await axios.post(
+                      '/api/index.php/rest/netlife/orderstatus', {
+                        // orderuuid: order.orderuuid,
+                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        status: 99,
+                        portaluuid: order.portaluuid
+                      } , {
+                        headers: {
+                          Authorization: `Admin ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                      }
+                    );
+                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    
+                    return { cancelResponse: cancelResponse, statusResponse: statusResponse.data };
+                  } catch (error) {
+                    console.error('Error fetching news:', error);
+                  }
+                    
               }));
-
               // Handle responses if necessary
               console.log('All projects cancelled successfully:', responses);
-              const cancelLog = responses.map(data => data.data);
-              toast.success("Successfully cancelled all orders");
-              setCancelLog(cancelLog);
+              const cancelLogArray: CancelLogEntry[] = [];
+              responses.forEach((element) => {
+                  console.log('cancelresponse', element?.cancelResponse);
+                  console.log('cancelresponse', element?.statusResponse);
+
+                  const logEntry: CancelLogEntry = {
+                    cancelResponse: element?.cancelResponse ? {
+                      message: element.cancelResponse.data.message,
+                      statuscode: element.cancelResponse.data.statuscode,
+                      orderuuid: element.cancelResponse.data.updated,
+                      timestamp: element.cancelResponse.data.timestamp,
+                      updated: element.cancelResponse.data.updated
+                    } : undefined,
+                    statusResponse: '', 
+                  };
+
+                  if (element?.statusResponse?.result.result === "OK") {
+                    console.log('statusresponse', element?.statusResponse.result);
+                    logEntry.statusResponse = element?.statusResponse.result.result || "";
+                  } else {
+                    console.log('statusresponse', element?.statusResponse?.result.message);
+                    logEntry.statusResponse = element?.statusResponse?.result.message || "";
+                  }
+                  cancelLogArray.push(logEntry);
+                  console.log('logEntry', logEntry);
+                  console.log('cancelLogArray', cancelLogArray);
+                  setCancelLog(cancelLogArray);
+                  setShowCancelLog(true);
+                  setShowExternalLog(false);
+                  setShowFlagLog(false);
+              });
+
+              // Check if any data in response is NOT FOUND from netlifes API
+              let validateResponse = "";
+              cancelLogArray.forEach(element => { 
+                console.log(element.statusResponse);
+                if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
+                  validateResponse = "true";
+                }
+              });
+
+              if (validateResponse === "true"){
+                toast.error("Not all orders was updated in Netlife. Check 'Cancel Log' for more info");
+              }  else {
+                toast.success("Successfully cancelled all orders");
+              }
+              
+              // setCancelLog(cancelLog);
           } catch (error) {
               console.error('Error cancelling projects:', error);
               toast.error('An error occurred while cancelling the orders');
-
           }
         }
       }
@@ -377,7 +454,7 @@ const Index = () => {
           <table className='table ' >
               <thead>
                 <tr>
-                  <th>Stauts</th>
+                  <th>Status</th>
                   <th>OrderUuid</th>
                   <th>Portal</th>
                   {/* <th>Paid</th> */}
@@ -419,8 +496,8 @@ const Index = () => {
                               {/* <td>{new Date(item.updated).toLocaleString().substring(0,10)}</td> */}
                               <td>{getOriginatingPrefix(item.originating)}</td>
                               {/* <td>{item.cnt !== null ? item.cnt : '-'}</td> */}
-                              <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' onClick={() => deleteRow(item)} /></button></td>
-                              <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon' onClick={() => deleteRow(item)} /></button></td>
+                              <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' /></button></td>
+                              <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td>
                               <td className='table-button' title='External' onClick={() => runExternal(item)}><button className='table-button '><FontAwesomeIcon icon={faSquareUpRight} title="External" className='table-icon' /></button></td>
                               <td className='table-button' title='Flag'><button className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button></td>
                           </tr>
@@ -443,19 +520,19 @@ const Index = () => {
           {/* SELECTED DATA BOX */}
           {selectedData.length > 0 && (
           <div className='selected-data-box'>
-            <h5 className='mb-5'><span style={{ textDecoration: "underline" }}>Selected Orders</span> ({selectedData.length}):</h5>
+            <h5><span style={{ textDecoration: "underline" }}>Selected Orders</span> ({selectedData.length}):</h5>
               {selectedData && selectedData.map((item) => (
                   <div className='mb-3 d-flex justify-content-between' key={item.orderuuid}>
                     <FontAwesomeIcon icon={faTimes} title="Remove Project" className='delete-selecteddata-button' onClick={() => deleteRow(item)} />
                     <h6 className='mx-3'>{item.orderuuid.length > 15 ? item.orderuuid.substring(0,15) + "..." : item.orderuuid.length}</h6>
                     <h6>{getPortalName(item.portaluuid)}</h6>
-                    <h6 className='mx-3'>{new Date(item.inserted).toLocaleString().substring(0,10)}</h6>
+                    <h6 className='mx-3'>{new Date(item.inserted).toLocaleString().substring(5,10)}</h6>
                     {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
                   </div>
                 ))}
               <h6 className='delete-all-button' title='Remove All Projects' onClick={() => deleteAll()}>Remove All</h6>
-              <hr className='my-5' style={{border: "0.5px solid rgba(255, 255, 255, 0.1)"}}></hr>
-              <div className=''>
+              <hr className='my-4' style={{border: "0.5px solid rgba(255, 255, 255, 0.1)"}}></hr>
+              <div>
                 <button className='button' title='Cancel orders' onClick={() => runCancel()}>Cancel {selectedData.length} orders</button>
                 <button className='button mx-2' title='Post orders'>Post {selectedData.length} orders</button>
                 <button className='button' title='Flag orders' onClick={() => runFlag()}>Flag {selectedData.length} orders</button>
@@ -469,17 +546,17 @@ const Index = () => {
             <div className='d-flex log-button-box'>
               {flagLog.length > 0 && (
                 <div>
-                  <button title='Flag Log' className='log-button' onClick={() => { setShowFlagLog(!showFlagLog); setShowExternalLog(false); setShowCancelLog(false); }} > {showFlagLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Flag Log</button>
+                  <button title='Flag Log' className={`log-button ${showFlagLog ? 'active-log-button' : ""}`} onClick={() => { setShowFlagLog(!showFlagLog); setShowExternalLog(false); setShowCancelLog(false); }} > {showFlagLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Flag Log</button>
                 </div>
                 )}
                 {externalLog.length > 0 && (
                 <div>
-                  <button title='External Log' className='log-button' onClick={() => { setShowExternalLog(!showExternalLog); setShowFlagLog(false); setShowCancelLog(false); }}> {showExternalLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} External Log</button>
+                  <button title='External Log' className={`log-button ${showExternalLog ? 'active-log-button' : ""}`} onClick={() => { setShowExternalLog(!showExternalLog); setShowFlagLog(false); setShowCancelLog(false); }}> {showExternalLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} External Log</button>
                 </div>
                 )}
                 {cancelLog.length > 0 && (
                 <div>
-                  <button title='Cancel Log' className='log-button' onClick={() => { setShowCancelLog(!showCancelLog); setShowFlagLog(false); setShowExternalLog(false); }}> {showCancelLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Cancel Log</button>
+                  <button title='Cancel Log' className={`log-button ${showCancelLog ? 'active-log-button' : ""}`} onClick={() => { setShowCancelLog(!showCancelLog); setShowFlagLog(false); setShowExternalLog(false); }}> {showCancelLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Cancel Log</button>
                 </div>
                 )}
             </div>
@@ -489,12 +566,11 @@ const Index = () => {
               {showFlagLog ? (
                 <div className='log-box'>
                   <h5>Flag Log:</h5>
-
                     <table className="log-table">
                       <thead>
                         <tr>
-                          <th>Message</th>
-                          <th>Order UUID</th>
+                          <th>Orderuuid</th>
+                          <th>Net_Orders</th>
                           <th>Code</th>
                           <th>Time</th>
                         </tr>
@@ -502,15 +578,14 @@ const Index = () => {
                       <tbody>
                         {flagLog.map((item) => (
                           <tr key={item.updated}>
-                            <td>{item.message || 'No message'}</td>
                             <td>{item.updated}</td>
+                            <td>{item.message || 'No message'}</td>
                             <td>{item.statuscode}</td>
                             <td>{item.timestamp ? item.timestamp : 'N/A'}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-
                 </div>
               ) : showExternalLog ? (
                 <div>
@@ -518,12 +593,11 @@ const Index = () => {
                   {showExternalLog && (
                   <div className='log-box'>
                     <h5>External Log:</h5>
-
                       <table className="log-table">
                         <thead>
                           <tr>
-                            <th>Message</th>
-                            <th>Order UUID</th>
+                            <th>Orderuuid</th>
+                            <th>Net_Orders</th>
                             <th>Code</th>
                             <th>Time</th>
                           </tr>
@@ -531,15 +605,14 @@ const Index = () => {
                         <tbody>
                           {externalLog.map((item) => (
                             <tr key={item.updated}>
-                              <td>{item.message || 'No message'}</td>
                               <td>{item.updated}</td>
+                              <td>{item.message || 'No message'}</td>
                               <td>{item.statuscode}</td>
                               <td>{item.timestamp ? item.timestamp : 'N/A'}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-
                   </div>
                   )}
                 </div>
@@ -549,28 +622,28 @@ const Index = () => {
                   {showCancelLog && (
                   <div className='log-box'>
                     <h5>Cancel Log:</h5>
-
                       <table className="log-table">
                         <thead>
                           <tr>
-                            <th>Message</th>
-                            <th>Order UUID</th>
-                            <th>Code</th>
+                            <th>Orderuuid</th>
+                            <th>Netlife</th>
+                            <th>Net_Orders</th>
+                            {/* <th>Code</th> */}
                             <th>Time</th>
                           </tr>
                         </thead>
                         <tbody>
                           {cancelLog.map((item) => (
-                            <tr key={item.updated}>
-                              <td>{item.message || 'No message'}</td>
-                              <td>{item.updated}</td>
-                              <td>{item.statuscode}</td>
-                              <td>{item.timestamp ? item.timestamp : 'N/A'}</td>
-                            </tr>
+                            <tr key={item.cancelResponse?.updated || 'default-key'}>
+                              <td>{item.cancelResponse?.updated || 'N/A'}</td>
+                              <td>{item.statusResponse || 'N/A'}</td>
+                              <td>{item.cancelResponse?.message || 'No message'}</td>
+                              {/* <td>{item.cancelResponse?.statuscode || 'N/A'}</td> */}
+                              <td>{item.cancelResponse?.timestamp || 'N/A'}</td>
+                          </tr>
                           ))}
                         </tbody>
                       </table>
-
                   </div>
                   )}
                 </div>

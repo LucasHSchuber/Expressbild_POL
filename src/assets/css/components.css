@@ -10,8 +10,8 @@
 }
 
 .spinner {
-  border: 8px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #3498db; /* Spinner color */
+  border: 8px solid rgb(52, 52, 52);
+  border-left-color: #000000; /* Spinner color */
   border-radius: 50%;
   width: 50px; /* Spinner size */
   height: 50px; /* Spinner size */

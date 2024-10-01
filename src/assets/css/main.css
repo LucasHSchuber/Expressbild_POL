@@ -4,7 +4,8 @@ html, .wrapper{
 
 .wrapper{
     color: rgb(241, 241, 241);
-    padding: 3em 5em;
+    padding: 3em 5em 0 11%;
+    margin-bottom: 3em;
 }
 
 /* HEADER */
@@ -17,6 +18,12 @@ html, .wrapper{
     font-weight: 400;
 }
 
+@media screen and (max-width: 1700px) {
+    .wrapper{
+        padding: 3em 5em 0 6%;
+    }
+
+}
 @media screen and (max-width: 1000px) {
     .wrapper{
         padding: 3em 2em;
@@ -59,11 +66,16 @@ html, .wrapper{
 }
 .selected-data-box{ 
     background-color: rgb(40, 40, 40);
-    width: 100%;
+    width: fit-content;
+    width: fit-content;
     height: fit-content;
-    padding: 2em 1.5em 4em 1.5em;
-    margin: 0 0 0 3em;
+    padding: 2em 3.5em 3em 1.5em;
+    margin: 0 0 2em 3em;
     border-left: 2px solid black;
+}
+.selected-data-box h5{ 
+    font-size: 1.1em;
+    margin-bottom: 2em;
 }
 .selected-data-box h6{ 
     font-size: 0.9em;
@@ -135,28 +147,37 @@ html, .wrapper{
 
   
 
-/* FLAG LOG TABLE */
+/*  LOG TABLE */
+
  .log-wrapper{
     margin: 0 0 0 3em;
-    height: 30em !important;
+    height: 10em !important;
+    max-height: 50em;
  }
  .log-box{
-    margin: 1em 0;
+    /* margin: 0; */
+    height: fit-content;
+    width: fit-content;
+    padding: 2em 1.5em;
+    /* background-color: rgb(21, 21, 21); */
+    background-color: rgb(40, 40, 40);
+    border-left: 2px solid black;
  }
- .log-button-box{
-    margin: 2em 0 0 0;
- }
+
  .log-table {
     border-collapse: collapse;
     font-size: 0.9em;
-  }
-  
+ }
   .log-table th, .log-table td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.392);
     padding: 5px 10px;
     text-align: left;
   }
-
+  .log-box h5{
+    font-size: 1em;
+    margin-bottom: 1em;
+    text-decoration: underline;
+ }
 
 
   @media screen and (max-width: 1500px) {
@@ -175,6 +196,8 @@ html, .wrapper{
         padding: 1em 2em;
         border-left: none;
         margin: 0;
+        margin-top:2em;
+        margin-bottom:2em;
         margin-top: 1.2em;
     }
 }
