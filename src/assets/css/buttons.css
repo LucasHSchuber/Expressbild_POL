@@ -45,9 +45,7 @@
 
 .table-button{
     text-align: center;
-    /* font-size: 0.9em; */
-    /* border-radius: 50%; */
-    width: 2em;
+    width: 2.9em;
     border: none;
     outline: none;
     cursor: pointer;
@@ -66,7 +64,8 @@
     color: rgb(223, 223, 223);
 }
 .table-icon-flag{
-    color: rgb(176, 100, 72);
+    color: rgb(203, 92, 51);
+    cursor: default !important;
 }
 
 /* LOG BUTTONS */

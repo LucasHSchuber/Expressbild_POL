@@ -113,10 +113,10 @@ const Index = () => {
     
 
 
-    useEffect(() => {
-      if (data.length === 0) {
+    const fetchData = async () => {
+      
         setLoading(true);
-        const fetchData = async () => {
+        // const fetchData = async () => {
           try {
             const response = await axios.get<{ data: DataArray[] }>(`${ENV.API_URL}api/alldata`);
             console.log(response.data);
@@ -133,11 +133,13 @@ const Index = () => {
             console.error("There was an error fetching the data!", error);
             setLoading(false);
           }
-        };
-
-        fetchData();
-      }
-      }, [data]);
+      // }
+    }
+      useEffect(() => {
+        // if (data.length === 0) {
+          fetchData();
+        // };
+      }, []);
 
 
       const getOriginatingPrefix = (originating: string) =>{
@@ -249,11 +251,11 @@ const Index = () => {
 
 
 
-      //  --------------- RUN FLAG METHOD --------------
+      //  --------------- RUN FLAG METHOD (on multiple orders) --------------
 
       const runFlag = async () => {
         console.log("Flag method triggered...");
-        const confirm = window.confirm(`Are you sure you want to flag ${selectedData.length} orders?`);
+        const confirm = window.confirm(`Are you sure you want to FLAG ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
@@ -280,6 +282,8 @@ const Index = () => {
               setShowFlagLog(true);
               setShowExternalLog(false);
               setShowCancelLog(false);
+              setShowPostLog(false);
+              fetchData();
           } catch (error) {
               console.error('Error flagging orders:', error);
               toast.error('An error occurred while flagging the orders');
@@ -288,11 +292,49 @@ const Index = () => {
       }
 
 
+       //  --------------- RUN FLAG METHOD (one order) --------------
+
+       const runFlagSingleOrder = async (item: DataArray) => {
+        console.log("runFlagSingleOrder method triggered...");
+        console.log('item', item);
+        const confirm = window.confirm(`Are you sure you want to FLAG the order`);
+        if (!confirm){
+          return;
+        } else {
+          console.log('triggered!');
+          try {
+                console.log('order', item.orderuuid);
+                const response = await axios.post(`${ENV.API_URL}api/flag`, {
+                    orderuuid: item.orderuuid
+                }, {
+                    headers: {
+                        Authorization: `Admin ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                // Handle responses if necessary
+              console.log('Order flagged successfully:', response.data);
+              toast.success("Successfully flagged the order");
+              setFlagLog((prevFlagLog) => [...prevFlagLog, response.data]);
+              setShowFlagLog(true);
+              setShowExternalLog(false);
+              setShowCancelLog(false);
+              setShowPostLog(false);
+              fetchData();
+          } catch (error) {
+              console.error('Error flagging order:', error);
+              toast.error('An error occurred while flagging the order');
+          }
+        }
+      }
+
+
+
       //  --------------- RUN EXTERNAL METHOD --------------
 
       const runExternal = async (item: DataArray) => {
         console.log("EXTERNAL method triggered...");
-        const confirm = window.confirm(`Are you sure you want to run External on order: ${item.orderuuid}?`);
+        const confirm = window.confirm(`Are you sure you want to run EXTERNAL on order: ${item.orderuuid}?`);
         if (!confirm){
           return;
         } else {
@@ -314,8 +356,10 @@ const Index = () => {
               setShowExternalLog(true);
               setShowCancelLog(false);
               setShowFlagLog(false);
+              setShowPostLog(false);
+              // fetchData();
           } catch (error) {
-              console.error('Error flagging orders:', error);
+              console.error('Error when running external on orders:', error);
               toast.error('An error occurred while running external on order');
 
           }
@@ -327,7 +371,7 @@ const Index = () => {
 
       const runCancel = async () => {
         console.log("Cancel method triggered...");
-        const confirm = window.confirm(`Are you sure you want to Cancel ${selectedData.length} orders?`);
+        const confirm = window.confirm(`Are you sure you want to CANCEL ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
@@ -405,6 +449,8 @@ const Index = () => {
                   setShowCancelLog(true);
                   setShowExternalLog(false);
                   setShowFlagLog(false);
+                  setShowPostLog(false);
+                  fetchData();
               });
 
               // Check if any data in response is NOT FOUND from netlifes API
@@ -437,7 +483,7 @@ const Index = () => {
 
       const runPost = async () => {
         console.log("Post method triggered...");
-        const confirm = window.confirm(`Are you sure you want to Post ${selectedData.length} orders?`);
+        const confirm = window.confirm(`Are you sure you want to POST ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
@@ -516,6 +562,7 @@ const Index = () => {
                   setShowExternalLog(false);
                   setShowFlagLog(false);
                   setShowCancelLog(false);
+                  fetchData();
               });
 
               // Check if any data in response is NOT FOUND from netlifes API
@@ -775,7 +822,7 @@ const Index = () => {
                               <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td>
                               <td className='table-button' title='External' onClick={() => runExternal(item)}><button className='table-button '><FontAwesomeIcon icon={faSquareUpRight} title="External" className='table-icon' /></button></td>
                               {/* <td className='table-button' title='Flag'><button className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button></td> */}
-                              <td> {item.pol_flag ? <FontAwesomeIcon icon={faFlag} title="Flagged Order" className='table-icon table-icon-flag'  /> : ""} </td>
+                              <td className={`${item.pol_flag ? "flagged-td": "table-button"}`} onClick={!item.pol_flag ? () => runFlagSingleOrder(item) : undefined}> {item.pol_flag ? <FontAwesomeIcon icon={faFlag} title="Flagged Order" className='table-icon table-icon-flag'  /> : <button  className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button>} </td>
                           </tr>
                       ))
                   ) : (

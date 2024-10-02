@@ -112,6 +112,12 @@ thead th {
     padding: 0.5em 0;
 }
 
+.flagged-td{
+    width: 2em;
+    text-align: center;
+}
+
+
 /* status */
 .status-green{
     color: rgb(0, 231, 0);
