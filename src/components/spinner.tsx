@@ -29,9 +29,9 @@ const Spinner = () => {
     <div className="spinner-container">
     <div className="spinner"></div>
       {message4 ? (
-      <p className='mt-3'>Maybe Try To Restart The Application And Try Again?</p>  
+      <p className='mt-3'>Maybe Restart or Refresh The Application And Try Again?</p>  
       ) : message3 ? (
-      <p className='mt-3'>Sorry It's Taking a While...</p>  
+      <p className='mt-3'>It's Taking a While...</p>  
         ) : message2 ? (
       <p className='mt-3'>Any Second Now...</p>
       ) : message1 ? (

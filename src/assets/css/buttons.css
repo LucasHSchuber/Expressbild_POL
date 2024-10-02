@@ -65,7 +65,9 @@
 .table-button-flag{
     color: rgb(223, 223, 223);
 }
-
+.table-icon-flag{
+    color: rgb(176, 100, 72);
+}
 
 /* LOG BUTTONS */
 .log-button{

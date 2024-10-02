@@ -61,6 +61,7 @@ app.get("/api/alldata", (req, res) => {
       np.cnt, 
       o.inserted,
       o.originating,
+      o.pol_flag,
       l.updated 
   FROM 
       eb_logs AS l 

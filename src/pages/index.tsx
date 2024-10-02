@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 
@@ -7,7 +9,7 @@ import Spinner from "../components/spinner.js"
 
 // import fotnawesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, faSquareUpRight } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, faSquareUpRight, faSort, faSortDown } from '@fortawesome/free-solid-svg-icons';
 
 //import toastify
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,6 +29,9 @@ const Index = () => {
   const [data, setData] = useState<DataArray[]>([]);
   const [selectedData, setSelectedData] = useState<DataArray[]>([]);
 
+  const [uniqueOriginatingArray, setUniqueOriginatingArray] = useState<string[]>([]);
+  const [uniqueOriginatingSet, setUniqueOriginatingSet] = useState<string[]>([]);
+
   const [flagLog, setFlagLog] = useState<FlagLogEntry[]>([]);
   const [showFlagLog, setShowFlagLog] = useState(false);
 
@@ -39,7 +44,46 @@ const Index = () => {
   const [postLog, setPostLog] = useState<PostLogEntry[]>([]);
   const [showPostLog, setShowPostLog] = useState(false);
 
+  const [sortColumn, setSortColumn] = useState<string>(''); 
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); 
+  const [filteredData, setFilteredData] = useState(data);
+
+  const [showPortalSelect, setShowPortalSelect] = useState(false);
+  const [selectedPortal, setSelectedPortal] = useState<string | null>(null);
+  const portalSelectRef = useRef<HTMLDivElement>(null);
+
+  const [showOriginatingSelect, setShowOriginatingSelect] = useState(false);
+  const [selectedOriginating, setSelectedOriginating] = useState<string | null>(null);
+  const originatingSelectRef = useRef<HTMLDivElement>(null);
+  
+
   const [token, setToken] = useState("");
+
+
+  // Get unique portaluuids from the data
+  const uniquePortals = [...new Set(data.map((item) => item.portaluuid))];
+  // Get unique originating from the data
+  
+  useEffect(() => {
+    console.log("started")
+    const _uniqueOriginatingSet = [...new Set(data.map((item) => item.originating))];
+    setUniqueOriginatingSet(_uniqueOriginatingSet);
+  }, [data]);
+  useEffect(() => {
+    console.log("started2")
+    let _uniqueOriginating: string [] = [];
+    uniqueOriginatingSet.forEach((item) => {
+      // Split the item by "/" and log the first part
+      const parts = item.split("/");
+      const firstPart = parts[0]; 
+      // console.log(parts[0]); // Log the first part after the split
+      if (!_uniqueOriginating.includes(parts[0])) {
+        _uniqueOriginating.push(firstPart);
+      }
+    });
+    setUniqueOriginatingArray(_uniqueOriginating);
+  }, [uniqueOriginatingSet]);
+
 
 
 
@@ -55,12 +99,12 @@ const Index = () => {
           const location = useLocation();
           const queryParams = new URLSearchParams(location.search);
           const token = queryParams.get('token');
-          if (token !== null) { // Check if token is not null
+          if (token !== null) {
             console.log(token);
-            setToken(token); // It's safe to set the token
+            setToken(token);
           } else {
             console.log("Token not found in URL");
-            setToken(''); // Or handle it as you prefer
+            setToken('');
           }
         }
       };
@@ -93,7 +137,7 @@ const Index = () => {
 
         fetchData();
       }
-      }, []);
+      }, [data]);
 
 
       const getOriginatingPrefix = (originating: string) =>{
@@ -138,28 +182,24 @@ const Index = () => {
         return portalname;
       }
 
-      const addRow = (project: DataArray) => {
-        console.log('project', project);
-        const exists = selectedData.some(item => item.orderuuid === project.orderuuid);
+      const addRow = (order: DataArray) => {
+        console.log('order', order);
+        const exists = selectedData.some(item => item.orderuuid === order.orderuuid);
         if (exists) {
-          console.log("Project is already added")
-          setSelectedData((prevArray) => prevArray.filter(i => i.orderuuid !== project.orderuuid));
+          console.log("Order is already added")
+          setSelectedData((prevArray) => prevArray.filter(i => i.orderuuid !== order.orderuuid));
           // toast.error("Order already added to selected orders list");
         } else {
-          setSelectedData((prevArray) => [...prevArray, project]);
+          setSelectedData((prevArray) => [...prevArray, order]);
         }
       }
 
       const deleteRow = (item: DataArray) => {
         console.log('item', item);{
-          console.log("Project is already added")
+          console.log("Order is already added")
           setSelectedData((prevArray) => prevArray.filter(i => i.orderuuid !== item.orderuuid));
-          toast.success("Order removed from selected orders list");
+          // toast.success("Order removed from selected orders list");
         }
-      }
-      const deleteAll = () => {
-          setSelectedData([]);
-          // toast.success("All orders removed from selected orders list");
       }
 
 
@@ -233,7 +273,7 @@ const Index = () => {
               }));
 
               // Handle responses if necessary
-              console.log('All projects flagged successfully:', responses);
+              console.log('All orders flagged successfully:', responses);
               const flagLog = responses.map(data => data.data);
               toast.success("Successfully flagged all orders");
               setFlagLog(flagLog);
@@ -241,7 +281,7 @@ const Index = () => {
               setShowExternalLog(false);
               setShowCancelLog(false);
           } catch (error) {
-              console.error('Error flagging projects:', error);
+              console.error('Error flagging orders:', error);
               toast.error('An error occurred while flagging the orders');
           }
         }
@@ -268,14 +308,14 @@ const Index = () => {
                     }
                 });
                 // Handle responses if necessary
-              console.log('All projects flagged successfully:', response);
+              console.log('All orders flagged successfully:', response);
               toast.success("Successfully ran external on order");
               setExternalLog((prevExternalLog) => [...prevExternalLog, response.data]);
               setShowExternalLog(true);
               setShowCancelLog(false);
               setShowFlagLog(false);
           } catch (error) {
-              console.error('Error flagging projects:', error);
+              console.error('Error flagging orders:', error);
               toast.error('An error occurred while running external on order');
 
           }
@@ -334,7 +374,7 @@ const Index = () => {
                     
               }));
               // Handle responses if necessary
-              console.log('All projects cancelled successfully:', responses);
+              console.log('All orders cancelled successfully:', responses);
               const cancelLogArray: CancelLogEntry[] = [];
               responses.forEach((element) => {
                   console.log('cancelresponse', element?.cancelResponse);
@@ -444,7 +484,7 @@ const Index = () => {
                     
               }));
               // Handle responses if necessary
-              console.log('All projects posted successfully:', responses);
+              console.log('All orders posted successfully:', responses);
               const postLogArray: PostLogEntry[] = [];
               responses.forEach((element) => {
                   console.log('postResponse', element?.postResponse);
@@ -503,7 +543,112 @@ const Index = () => {
 
 
 
+      //  --------------- SERTING TABLE --------------
 
+      const sortTable = (column: string) => {
+        const sortedData = [...data]; // clone data array
+        let direction: 'asc' | 'desc' = sortDirection === 'asc' ? 'desc' : 'asc';
+      
+        if (column === 'status') {
+          sortedData.sort((a, b) => {
+            const getStatusPriority = (item: DataArray) => {
+              if (item.paid > 0) return 3; 
+              if (item.cnt > 0) return 2; 
+              return 1; 
+            };
+      
+            const statusA = getStatusPriority(a);
+            const statusB = getStatusPriority(b);
+      
+            return direction === 'asc' ? statusA - statusB : statusB - statusA;
+          });
+        } else if (column === 'inserted') {
+          sortedData.sort((a, b) => {
+            const dateA = new Date(a.inserted).getTime();
+            const dateB = new Date(b.inserted).getTime();
+            return direction === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+        } else if (column === "flag"){
+          
+            sortedData.sort((a, b) => {
+              const getFlagPriority = (item: DataArray) => {
+                return item.pol_flag ? 1 : 2;
+            };
+            const flagA = getFlagPriority(a);
+            const flagB = getFlagPriority(b);
+        
+            return direction === 'asc' ? flagA - flagB : flagB - flagA;
+            });
+        }
+          
+      
+        setSortColumn(column);
+        setSortDirection(direction);
+        setData(sortedData);
+      };
+
+
+      const handlePortalSelect = (portal: string) => {
+        const sortedData = [...data]; // clone the data array
+        console.log('selectedValue', portal); 
+        setShowPortalSelect(false);
+        // setSelectedPortal(portal);
+      
+        if (portal === "all") {
+          setData(sortedData); 
+        } else {
+          // Sort the data to place selected portaluuid at the top
+          const sortedByPortal = sortedData.sort((a, b) => {
+            // First prioritize entries with the selected portaluuid
+            if (a.portaluuid === portal && b.portaluuid !== portal) {
+              return -1;
+            } else if (a.portaluuid !== portal && b.portaluuid === portal) {
+              return 1; 
+            }
+            // If both or neither match the selectedValue, sort by inserted date
+            const dateA = new Date(a.inserted).getTime();
+            const dateB = new Date(b.inserted).getTime();
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+      
+          setData(sortedByPortal);
+        }
+      };
+
+      const handleOriginatingSelect = (origin: string) => {
+        const sortedData = [...data]; 
+        console.log('selectedValue', origin); 
+        setShowPortalSelect(false);
+      
+        if (origin === "all") {
+          setData(sortedData); 
+        } else {
+          // Sort the data to place selected originating at the top
+          const sortedByOriginating = sortedData.sort((a, b) => {
+            // First prioritize entries with the selected originating
+            if (a.originating.split("/")[0] === origin && b.originating.split("/")[0] !== origin) {
+              return -1;
+            } else if (a.originating.split("/")[0] !== origin && b.originating.split("/")[0] === origin) {
+              return 1; 
+            }
+            // If both or neither match the selectedValue, sort by inserted date
+            const dateA = new Date(a.inserted).getTime();
+            const dateB = new Date(b.inserted).getTime();
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+      
+          setData(sortedByOriginating); 
+        }
+      };
+
+      
+
+    
+      useEffect(() => {
+        console.log('filteredData', filteredData);
+      }, [filteredData]);
+
+      
 
       useEffect(() => {
         console.log('flagLog', flagLog);
@@ -513,6 +658,21 @@ const Index = () => {
       }, [flagLog, externalLog, postLog, cancelLog]);
 
 
+      // Close dropdowns when clicking outside
+      useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+          if (portalSelectRef.current && !portalSelectRef.current.contains(event.target as Node)) {
+            setShowPortalSelect(false);
+          }
+          if (originatingSelectRef.current && !originatingSelectRef.current.contains(event.target as Node)) {
+            setShowOriginatingSelect(false);
+          }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+      }, []);
 
 
 
@@ -533,21 +693,61 @@ const Index = () => {
           <table className='table ' >
               <thead>
                 <tr>
-                  <th>Status</th>
+                  <th onClick={() => sortTable("status")} className='table-header'>Status <FontAwesomeIcon icon={faSort} className='' title="Sort Status" /></th>
                   <th>OrderUuid</th>
-                  <th>Portal</th>
-                  {/* <th>Paid</th> */}
-                  <th>Inserted</th>
-                  {/* <th>Updated</th> */}
-                  <th>Originating</th>
-                  {/* <th>Count</th> */}
+                  <th onClick={() => setShowPortalSelect(!showPortalSelect)} className='table-header'>Portal <FontAwesomeIcon icon={faSortDown} className='table-header' title="Sort Portal" style={{ marginBottom: "0.2em" }} />
+                      {showPortalSelect && (
+                        <div
+                          ref={portalSelectRef}
+                          className="table-header-select"
+                        >
+                          <div
+                            className='table-header-select-option'
+                            onClick={() => handlePortalSelect('all')}
+                          >
+                            All
+                          </div>
+                          {uniquePortals.map((portal) => (
+                            <div
+                              key={portal}
+                              className='table-header-select-option'
+                              onClick={() => handlePortalSelect(portal)}
+                            >
+                              {getPortalName(portal)}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </th>
+                  <th onClick={() => sortTable("inserted")} className='table-header'>Inserted <FontAwesomeIcon icon={faSort} className='' title="Sort Inserted" /></th>
+                  <th onClick={() => setShowOriginatingSelect(!showOriginatingSelect)} className='table-header'>Originating <FontAwesomeIcon icon={faSortDown} className='table-header' title="Sort Portal" style={{ marginBottom: "0.2em" }} />
+                    {showOriginatingSelect && (
+                          <div
+                            ref={originatingSelectRef}
+                            className="table-header-select"
+                          >
+                            <div
+                              className='table-header-select-option'
+                              onClick={() => handleOriginatingSelect('all')}
+                            >
+                              All
+                            </div>
+                            {uniqueOriginatingArray && uniqueOriginatingArray.map((originating) => (
+                              <div
+                                key={originating}
+                                className='table-header-select-option'
+                                onClick={() => handleOriginatingSelect(originating)}
+                              >
+                                {getOriginatingPrefix(originating)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                  </th>
                   <th>Netlife</th>
                   <th>PicR.</th>
                   <th>External</th>
-                  <th>Flag</th>
-                  {/* <th></th>
-                  <th></th>
-                  <th></th> */}
+                  <th onClick={() => sortTable("flag")} className='table-header'>Flag <FontAwesomeIcon icon={faSort} className='' title="Sort Flagged" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -568,17 +768,14 @@ const Index = () => {
                                 {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' title="Paid" /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' title="Returned" /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' title="None" /> : "-"}
                               </td>
                               <td title={item.orderuuid}>{item.orderuuid.length > 12 ? item.orderuuid.substring(0, 12) + '...' : item.orderuuid}</td>
-                              {/* <td title={item.portaluuid}>{item.portaluuid.length > 12 ? item.portaluuid.substring(0, 12) + '...' : item.portaluuid}</td> */}
-                              <td title={item.portaluuid}>{getPortalName(item.portaluuid)}</td>
-                              {/* <td>{item.paid}</td> */}
+                              <td title={getPortalName(item.portaluuid)}>{getPortalName(item.portaluuid)}</td>
                               <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td>
-                              {/* <td>{new Date(item.updated).toLocaleString().substring(0,10)}</td> */}
                               <td>{getOriginatingPrefix(item.originating)}</td>
-                              {/* <td>{item.cnt !== null ? item.cnt : '-'}</td> */}
                               <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' /></button></td>
                               <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td>
                               <td className='table-button' title='External' onClick={() => runExternal(item)}><button className='table-button '><FontAwesomeIcon icon={faSquareUpRight} title="External" className='table-icon' /></button></td>
-                              <td className='table-button' title='Flag'><button className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button></td>
+                              {/* <td className='table-button' title='Flag'><button className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button></td> */}
+                              <td> {item.pol_flag ? <FontAwesomeIcon icon={faFlag} title="Flagged Order" className='table-icon table-icon-flag'  /> : ""} </td>
                           </tr>
                       ))
                   ) : (
@@ -599,17 +796,20 @@ const Index = () => {
           {/* SELECTED DATA BOX */}
           {selectedData.length > 0 && (
           <div className='selected-data-box'>
-            <h5><span style={{ textDecoration: "underline" }}>Selected Orders</span> ({selectedData.length}):</h5>
+              <div className='d-flex justify-content-between'>
+                <h5><span style={{ textDecoration: "underline" }}>Selected Orders</span> ({selectedData.length}):</h5>
+                <FontAwesomeIcon icon={faTimes} title="Remove All Orders" className='delete-selecteddata-button' onClick={() => setSelectedData([])} />
+              </div>
               {selectedData && selectedData.map((item) => (
                   <div className='d-flex justify-content-between selected-data-row' key={item.orderuuid}>
-                    <FontAwesomeIcon icon={faTimes} title="Remove Project" className='delete-selecteddata-button' onClick={() => deleteRow(item)} />
+                    <FontAwesomeIcon icon={faTimes} title="Remove Order" className='delete-selecteddata-button' onClick={() => deleteRow(item)} />
                     <h6 className='mx-3'>{item.orderuuid.length > 15 ? item.orderuuid.substring(0,15) + "..." : item.orderuuid.length}</h6>
                     <h6>{getPortalName(item.portaluuid)}</h6>
                     <h6 className='mx-3'>{new Date(item.inserted).toLocaleString().substring(5,10)}</h6>
                     {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
                   </div>
                 ))}
-              <h6 className='delete-all-button' title='Remove All Projects' onClick={() => deleteAll()}>Remove All</h6>
+              {/* <h6 className='delete-all-button' title='Remove All Orders' onClick={() => deleteAll()}>Remove All</h6> */}
               <hr className='my-4' style={{border: "0.5px solid rgba(255, 255, 255, 0.1)"}}></hr>
               <div>
                 <button className='button' title='Cancel orders' onClick={() => runCancel()}>Cancel {selectedData.length} orders</button>
