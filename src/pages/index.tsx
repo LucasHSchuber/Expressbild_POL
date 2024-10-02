@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 // import spinner
 import Spinner from "../components/spinner.js"
@@ -16,47 +16,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import ENV from '../../env.js'; 
 // import API_CONFIG from '../../apiConfig.js'; 
 
-
-console.log(ENV);
-// console.log(API_CONFIG);
-
-// imported css files
-
-interface DataArray {
-    cnt: number,
-    inserted: string
-    orderuuid: string,
-    originating: string,
-    paid: number,
-    portaluuid: string,
-    updated: string
-}
-interface FlagLogEntry {
-  message: string,
-  updated: string,
-  timestamp: string,
-  statuscode: number
-}
-interface ExternalLogEntry {
-  message: string,
-  updated: string,
-  timestamp: string,
-  statuscode: number
-}
-interface CancelLogEntry {
-  cancelResponse: {
-    message: string;
-    statuscode: number;
-    orderuuid: string;
-    timestamp: string;
-    updated: string;
-  } | undefined;    
-  statusResponse: string;
-}
-interface TokenEntry {
-  token: string,
-}
-
+//import interfaces
+import { DataArray, FlagLogEntry, ExternalLogEntry, CancelLogEntry, PostLogEntry,  } from '../interfaces/interfaces.js';
 
 
 
@@ -74,6 +35,9 @@ const Index = () => {
 
   const [cancelLog, setCancelLog] = useState<CancelLogEntry[]>([]);
   const [showCancelLog, setShowCancelLog] = useState(false);
+
+  const [postLog, setPostLog] = useState<PostLogEntry[]>([]);
+  const [showPostLog, setShowPostLog] = useState(false);
 
   const [token, setToken] = useState("");
 
@@ -346,7 +310,7 @@ const Index = () => {
                    let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
                    console.log('order.orderuuid', order.orderuuid);
                    try {
-                    console.log('sending orderuuid to netlife api: ', order_uuid );
+                    console.log('sending orderuuid to netlife api with status 99: ');
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
                         // orderuuid: order.orderuuid,
@@ -374,7 +338,7 @@ const Index = () => {
               const cancelLogArray: CancelLogEntry[] = [];
               responses.forEach((element) => {
                   console.log('cancelresponse', element?.cancelResponse);
-                  console.log('cancelresponse', element?.statusResponse);
+                  console.log('statusResponse', element?.statusResponse);
 
                   const logEntry: CancelLogEntry = {
                     cancelResponse: element?.cancelResponse ? {
@@ -420,7 +384,7 @@ const Index = () => {
               
               // setCancelLog(cancelLog);
           } catch (error) {
-              console.error('Error cancelling projects:', error);
+              console.error('Error cancelling orders:', error);
               toast.error('An error occurred while cancelling the orders');
           }
         }
@@ -428,10 +392,125 @@ const Index = () => {
 
 
 
+
+      //  --------------- RUN POST METHOD --------------
+
+      const runPost = async () => {
+        console.log("Post method triggered...");
+        const confirm = window.confirm(`Are you sure you want to Post ${selectedData.length} orders?`);
+        if (!confirm){
+          return;
+        } else {
+          console.log('triggered!');
+          // Update net_orders
+          try {
+              // Use Promise.all to handle multiple requests concurrently
+              const responses = await Promise.all(selectedData.map(async (order) => {
+                  console.log('order', order.orderuuid);
+                  const postResponse = await axios.post(`${ENV.API_URL}api/post`, {
+                      orderuuid: order.orderuuid
+                  }, {
+                      headers: {
+                          Authorization: `Admin ${token}`,
+                          'Content-Type': 'application/json',
+                      }
+                  });
+                  console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
+                   // Update netlife through REST API
+                   let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                   console.log('order.orderuuid', order.orderuuid);
+                   try {
+                    console.log('sending orderuuid to netlife api with status 9: ');
+                    const statusResponse = await axios.post(
+                      '/api/index.php/rest/netlife/orderstatus', {
+                        // orderuuid: order.orderuuid,
+                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        status: 9,
+                        portaluuid: order.portaluuid
+                      } , {
+                        headers: {
+                          Authorization: `Admin ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                      }
+                    );
+                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    
+                    return { postResponse: postResponse, statusResponse: statusResponse.data };
+                  } catch (error) {
+                    console.error('Error fetching news:', error);
+                  }
+                    
+              }));
+              // Handle responses if necessary
+              console.log('All projects posted successfully:', responses);
+              const postLogArray: PostLogEntry[] = [];
+              responses.forEach((element) => {
+                  console.log('postResponse', element?.postResponse);
+                  console.log('statusResponse', element?.statusResponse);
+
+                  const logEntry: PostLogEntry = {
+                    postResponse: element?.postResponse ? {
+                      message: element.postResponse.data.message,
+                      statuscode: element.postResponse.data.statuscode,
+                      orderuuid: element.postResponse.data.updated,
+                      timestamp: element.postResponse.data.timestamp,
+                      updated: element.postResponse.data.updated
+                    } : undefined,
+                    statusResponse: '', 
+                  };
+
+                  if (element?.statusResponse?.result.result === "OK") {
+                    console.log('statusresponse', element?.statusResponse.result);
+                    logEntry.statusResponse = element?.statusResponse.result.result || "";
+                  } else {
+                    console.log('statusresponse', element?.statusResponse?.result.message);
+                    logEntry.statusResponse = element?.statusResponse?.result.message || "";
+                  }
+                  postLogArray.push(logEntry);
+                  console.log('logEntry', logEntry);
+                  console.log('cancelLogArray', postLogArray);
+                  setPostLog(postLogArray);
+                  setShowPostLog(true);
+                  setShowExternalLog(false);
+                  setShowFlagLog(false);
+                  setShowCancelLog(false);
+              });
+
+              // Check if any data in response is NOT FOUND from netlifes API
+              let validateResponse = "";
+              postLogArray.forEach(element => { 
+                console.log(element.statusResponse);
+                if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
+                  validateResponse = "true";
+                }
+              });
+
+              if (validateResponse === "true"){
+                toast.error("Not all orders was updated in Netlife. Check 'Post Log' for more info");
+              }  else {
+                toast.success("Successfully posted all orders");
+              }
+              
+              // setCancelLog(cancelLog);
+          } catch (error) {
+              console.error('Error posting orders:', error);
+              toast.error('An error occurred while posting the orders');
+          }
+        }
+      }
+
+
+
+
+
       useEffect(() => {
         console.log('flagLog', flagLog);
         console.log('externalLog', externalLog);
-      }, [flagLog, externalLog]);
+        console.log('cancelLog', cancelLog);
+        console.log('postLog', postLog);
+      }, [flagLog, externalLog, postLog, cancelLog]);
 
 
 
@@ -522,7 +601,7 @@ const Index = () => {
           <div className='selected-data-box'>
             <h5><span style={{ textDecoration: "underline" }}>Selected Orders</span> ({selectedData.length}):</h5>
               {selectedData && selectedData.map((item) => (
-                  <div className='mb-3 d-flex justify-content-between' key={item.orderuuid}>
+                  <div className='d-flex justify-content-between selected-data-row' key={item.orderuuid}>
                     <FontAwesomeIcon icon={faTimes} title="Remove Project" className='delete-selecteddata-button' onClick={() => deleteRow(item)} />
                     <h6 className='mx-3'>{item.orderuuid.length > 15 ? item.orderuuid.substring(0,15) + "..." : item.orderuuid.length}</h6>
                     <h6>{getPortalName(item.portaluuid)}</h6>
@@ -534,7 +613,7 @@ const Index = () => {
               <hr className='my-4' style={{border: "0.5px solid rgba(255, 255, 255, 0.1)"}}></hr>
               <div>
                 <button className='button' title='Cancel orders' onClick={() => runCancel()}>Cancel {selectedData.length} orders</button>
-                <button className='button mx-2' title='Post orders'>Post {selectedData.length} orders</button>
+                <button className='button mx-2' title='Post orders' onClick={() => runPost()}>Post {selectedData.length} orders</button>
                 <button className='button' title='Flag orders' onClick={() => runFlag()}>Flag {selectedData.length} orders</button>
               </div>
           </div>
@@ -546,25 +625,30 @@ const Index = () => {
             <div className='d-flex log-button-box'>
               {flagLog.length > 0 && (
                 <div>
-                  <button title='Flag Log' className={`log-button ${showFlagLog ? 'active-log-button' : ""}`} onClick={() => { setShowFlagLog(!showFlagLog); setShowExternalLog(false); setShowCancelLog(false); }} > {showFlagLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Flag Log</button>
+                  <button title='Flag Log' className={`log-button ${showFlagLog ? 'active-log-button' : ""}`} onClick={() => { setShowFlagLog(!showFlagLog); setShowExternalLog(false); setShowCancelLog(false); setShowPostLog(false); }} > {showFlagLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Flag Log</button>
                 </div>
                 )}
                 {externalLog.length > 0 && (
                 <div>
-                  <button title='External Log' className={`log-button ${showExternalLog ? 'active-log-button' : ""}`} onClick={() => { setShowExternalLog(!showExternalLog); setShowFlagLog(false); setShowCancelLog(false); }}> {showExternalLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} External Log</button>
+                  <button title='External Log' className={`log-button ${showExternalLog ? 'active-log-button' : ""}`} onClick={() => { setShowExternalLog(!showExternalLog); setShowFlagLog(false); setShowCancelLog(false); setShowPostLog(false); }}> {showExternalLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} External Log</button>
                 </div>
                 )}
                 {cancelLog.length > 0 && (
                 <div>
-                  <button title='Cancel Log' className={`log-button ${showCancelLog ? 'active-log-button' : ""}`} onClick={() => { setShowCancelLog(!showCancelLog); setShowFlagLog(false); setShowExternalLog(false); }}> {showCancelLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Cancel Log</button>
+                  <button title='Cancel Log' className={`log-button ${showCancelLog ? 'active-log-button' : ""}`} onClick={() => { setShowCancelLog(!showCancelLog); setShowFlagLog(false); setShowExternalLog(false); setShowPostLog(false); }}> {showCancelLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Cancel Log</button>
+                </div>
+                )}
+                {postLog.length > 0 && (
+                <div>
+                  <button title='Post Log' className={`log-button ${showPostLog ? 'active-log-button' : ""}`} onClick={() => { setShowPostLog(!showPostLog); setShowFlagLog(false); setShowExternalLog(false); setShowCancelLog(false); }}> {showPostLog ? <FontAwesomeIcon icon={faAngleUp} title="Hide Log" /> : <FontAwesomeIcon icon={faAngleDown} title="Show Log" />} Post Log</button>
                 </div>
                 )}
             </div>
 
-            <div>
+            <div className='log-box'>
               {/* FLAG LOG */}
               {showFlagLog ? (
-                <div className='log-box'>
+                <div className='log'>
                   <h5>Flag Log:</h5>
                     <table className="log-table">
                       <thead>
@@ -578,9 +662,9 @@ const Index = () => {
                       <tbody>
                         {flagLog.map((item) => (
                           <tr key={item.updated}>
-                            <td>{item.updated}</td>
-                            <td>{item.message || 'No message'}</td>
-                            <td>{item.statuscode}</td>
+                            <td>{item.updated || 'N/A'}</td>
+                            <td>{item.message || 'N/A'}</td>
+                            <td>{item.statuscode || 'N/A'}</td>
                             <td>{item.timestamp ? item.timestamp : 'N/A'}</td>
                           </tr>
                         ))}
@@ -591,7 +675,7 @@ const Index = () => {
                 <div>
                   {/* EXTERNAL LOG */}
                   {showExternalLog && (
-                  <div className='log-box'>
+                  <div className='log'>
                     <h5>External Log:</h5>
                       <table className="log-table">
                         <thead>
@@ -605,9 +689,9 @@ const Index = () => {
                         <tbody>
                           {externalLog.map((item) => (
                             <tr key={item.updated}>
-                              <td>{item.updated}</td>
-                              <td>{item.message || 'No message'}</td>
-                              <td>{item.statuscode}</td>
+                              <td>{item.updated || 'N/A'}</td>
+                              <td>{item.message || 'N/A'}</td>
+                              <td>{item.statuscode || 'N/A'}</td>
                               <td>{item.timestamp ? item.timestamp : 'N/A'}</td>
                             </tr>
                           ))}
@@ -620,7 +704,7 @@ const Index = () => {
                 <div>
                   {/* CANCEL LOG */}
                   {showCancelLog && (
-                  <div className='log-box'>
+                  <div className='log'>
                     <h5>Cancel Log:</h5>
                       <table className="log-table">
                         <thead>
@@ -628,18 +712,45 @@ const Index = () => {
                             <th>Orderuuid</th>
                             <th>Netlife</th>
                             <th>Net_Orders</th>
-                            {/* <th>Code</th> */}
                             <th>Time</th>
                           </tr>
                         </thead>
                         <tbody>
                           {cancelLog.map((item) => (
-                            <tr key={item.cancelResponse?.updated || 'default-key'}>
+                            <tr key={item.cancelResponse?.updated || 'N/A'}>
                               <td>{item.cancelResponse?.updated || 'N/A'}</td>
                               <td>{item.statusResponse || 'N/A'}</td>
-                              <td>{item.cancelResponse?.message || 'No message'}</td>
-                              {/* <td>{item.cancelResponse?.statuscode || 'N/A'}</td> */}
+                              <td>{item.cancelResponse?.message || 'N/A'}</td>
                               <td>{item.cancelResponse?.timestamp || 'N/A'}</td>
+                          </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                  </div>
+                  )}
+                </div>
+              ) : showPostLog ? (
+                <div>
+                  {/* POST LOG */}
+                  {showPostLog && (
+                  <div className='log'>
+                    <h5>Post Log:</h5>
+                      <table className="log-table">
+                        <thead>
+                          <tr>
+                            <th>Orderuuid</th>
+                            <th>Netlife</th>
+                            <th>Net_Orders</th>
+                            <th>Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {postLog.map((item) => (
+                            <tr key={item.postResponse?.updated || 'N/A'}>
+                              <td>{item.postResponse?.updated || 'N/A'}</td>
+                              <td>{item.statusResponse || 'N/A'}</td>
+                              <td>{item.postResponse?.message || 'N/A'}</td>
+                              <td>{item.postResponse?.timestamp || 'N/A'}</td>
                           </tr>
                           ))}
                         </tbody>
@@ -649,6 +760,7 @@ const Index = () => {
                 </div>
               ) : null }
             </div>
+
           </div>
 
         </div>
@@ -665,7 +777,7 @@ const Index = () => {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme="dark" // Can be "light", "dark", or "colored"
+                theme="dark" // light, dark, or colored
                 style={{ width: "400px", fontSize: "1rem" }}
                 // toastClassName="custom-toast"
                 // bodyClassName="custom-toast-body"

@@ -80,6 +80,9 @@ html, .wrapper{
 .selected-data-box h6{ 
     font-size: 0.9em;
 }
+.selected-data-row{
+    padding: 0.5em 0;
+}
 
 /* status */
 .status-green{
@@ -155,11 +158,13 @@ html, .wrapper{
     max-height: 50em;
  }
  .log-box{
-    /* margin: 0; */
+    padding-bottom: 4em;
+ }
+ .log{
     height: fit-content;
     width: fit-content;
     padding: 2em 1.5em;
-    /* background-color: rgb(21, 21, 21); */
+    margin-bottom: 2em !important;
     background-color: rgb(40, 40, 40);
     border-left: 2px solid black;
  }
@@ -200,6 +205,12 @@ html, .wrapper{
         margin-bottom:2em;
         margin-top: 1.2em;
     }
+    .selected-data-row{
+        padding: 0.1em 0;
+    }
+    .log-wrapper{
+        margin: 0 0 0 0;
+     }
 }
 @media screen and (max-width: 1000px) {
     .table{
@@ -209,6 +220,5 @@ html, .wrapper{
     .selected-data-box h6{
         font-size: 0.8em;
     }
-
 }
 
