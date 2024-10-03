@@ -4,12 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 
-// import spinner
+// import spinners
 import Spinner from "../components/spinner.js"
+import SpinnerMethod from "../components/spinnerMethod.js"
 
 // import fotnawesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, faSquareUpRight, faSort, faSortDown } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, faSquareUpRight, faSort, faSortDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
 //import toastify
 import { ToastContainer, toast } from 'react-toastify';
@@ -26,7 +27,9 @@ import { DataArray, FlagLogEntry, ExternalLogEntry, CancelLogEntry, PostLogEntry
 const Index = () => {
 
   const [loading, setLoading] = useState(false);
+  const [loadingMethod, setLoadingmethod] = useState(false);
   const [data, setData] = useState<DataArray[]>([]);
+  const [searchData, setSearchData] = useState<DataArray[]>([]);
   const [selectedData, setSelectedData] = useState<DataArray[]>([]);
 
   const [uniqueOriginatingArray, setUniqueOriginatingArray] = useState<string[]>([]);
@@ -43,27 +46,31 @@ const Index = () => {
 
   const [postLog, setPostLog] = useState<PostLogEntry[]>([]);
   const [showPostLog, setShowPostLog] = useState(false);
-
+  // sort column
   const [sortColumn, setSortColumn] = useState<string>(''); 
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); 
   const [filteredData, setFilteredData] = useState(data);
-
+// portal select
   const [showPortalSelect, setShowPortalSelect] = useState(false);
-  const [selectedPortal, setSelectedPortal] = useState<string | null>(null);
   const portalSelectRef = useRef<HTMLDivElement>(null);
-
+// originating select
   const [showOriginatingSelect, setShowOriginatingSelect] = useState(false);
-  const [selectedOriginating, setSelectedOriginating] = useState<string | null>(null);
   const originatingSelectRef = useRef<HTMLDivElement>(null);
-  
+  // status select
+  const [showStatusSelect, setShowStatusSelect] = useState(false);
+  const statusSelectRef = useRef<HTMLDivElement>(null);
+  // orderuuid search
+  const [showSearchOrderuuid, setShowSearchOrderuuid] = useState(false);
+  const orderuuidSearchRef = useRef<HTMLDivElement>(null);
+  const [searchString, setSearchString] = useState("");
 
   const [token, setToken] = useState("");
 
-
+  // Get unique portaluuids from the data
+  const uniqueStatus = ["Green", "Yellow", "Red"];
   // Get unique portaluuids from the data
   const uniquePortals = [...new Set(data.map((item) => item.portaluuid))];
   // Get unique originating from the data
-  
   useEffect(() => {
     console.log("started")
     const _uniqueOriginatingSet = [...new Set(data.map((item) => item.originating))];
@@ -86,6 +93,7 @@ const Index = () => {
 
 
 
+    // -------------- FETCHING TOKEN ------------------
 
     // Fetch token from URL query parameters
     useEffect(() => {
@@ -113,10 +121,10 @@ const Index = () => {
     
 
 
+    // -------------- FETCHING DATA FROM DATABASE METHOD ------------------
+
     const fetchData = async () => {
-      
         setLoading(true);
-        // const fetchData = async () => {
           try {
             const response = await axios.get<{ data: DataArray[] }>(`${ENV.API_URL}api/alldata`);
             console.log(response.data);
@@ -133,14 +141,13 @@ const Index = () => {
             console.error("There was an error fetching the data!", error);
             setLoading(false);
           }
-      // }
     }
       useEffect(() => {
-        // if (data.length === 0) {
           fetchData();
-        // };
       }, []);
 
+
+      // ---------- GETTING ORGIINATING PREFIX (by splitting strings and returning first value in array) -------------
 
       const getOriginatingPrefix = (originating: string) =>{
         const firstPart = originating.split("/")
@@ -205,6 +212,7 @@ const Index = () => {
       }
 
 
+
       const openNetlife = (item: DataArray) => {
         let url = "";
         switch (item.portaluuid) {
@@ -251,9 +259,14 @@ const Index = () => {
 
 
 
+      //  ------------------------------------------- METHODS -------------------------------------------
+
+
+
       //  --------------- RUN FLAG METHOD (on multiple orders) --------------
 
       const runFlag = async () => {
+        setLoadingmethod(true);
         console.log("Flag method triggered...");
         const confirm = window.confirm(`Are you sure you want to FLAG ${selectedData.length} orders?`);
         if (!confirm){
@@ -284,9 +297,11 @@ const Index = () => {
               setShowCancelLog(false);
               setShowPostLog(false);
               fetchData();
+              setLoadingmethod(false);
           } catch (error) {
               console.error('Error flagging orders:', error);
               toast.error('An error occurred while flagging the orders');
+              setLoadingmethod(false);
           }
         }
       }
@@ -295,6 +310,7 @@ const Index = () => {
        //  --------------- RUN FLAG METHOD (one order) --------------
 
        const runFlagSingleOrder = async (item: DataArray) => {
+        setLoadingmethod(true);
         console.log("runFlagSingleOrder method triggered...");
         console.log('item', item);
         const confirm = window.confirm(`Are you sure you want to FLAG the order`);
@@ -320,10 +336,12 @@ const Index = () => {
               setShowExternalLog(false);
               setShowCancelLog(false);
               setShowPostLog(false);
+              setLoadingmethod(false);
               fetchData();
           } catch (error) {
               console.error('Error flagging order:', error);
               toast.error('An error occurred while flagging the order');
+              setLoadingmethod(false);
           }
         }
       }
@@ -333,6 +351,7 @@ const Index = () => {
       //  --------------- RUN EXTERNAL METHOD --------------
 
       const runExternal = async (item: DataArray) => {
+        setLoadingmethod(true);
         console.log("EXTERNAL method triggered...");
         const confirm = window.confirm(`Are you sure you want to run EXTERNAL on order: ${item.orderuuid}?`);
         if (!confirm){
@@ -358,10 +377,11 @@ const Index = () => {
               setShowFlagLog(false);
               setShowPostLog(false);
               // fetchData();
+              setLoadingmethod(false);
           } catch (error) {
               console.error('Error when running external on orders:', error);
               toast.error('An error occurred while running external on order');
-
+              setLoadingmethod(false);
           }
       }
       }
@@ -370,6 +390,7 @@ const Index = () => {
       //  --------------- RUN CANCEL METHOD --------------
 
       const runCancel = async () => {
+        setLoadingmethod(true);
         console.log("Cancel method triggered...");
         const confirm = window.confirm(`Are you sure you want to CANCEL ${selectedData.length} orders?`);
         if (!confirm){
@@ -451,6 +472,7 @@ const Index = () => {
                   setShowFlagLog(false);
                   setShowPostLog(false);
                   fetchData();
+                  setLoadingmethod(false);
               });
 
               // Check if any data in response is NOT FOUND from netlifes API
@@ -472,6 +494,7 @@ const Index = () => {
           } catch (error) {
               console.error('Error cancelling orders:', error);
               toast.error('An error occurred while cancelling the orders');
+              setLoadingmethod(false);
           }
         }
       }
@@ -482,6 +505,7 @@ const Index = () => {
       //  --------------- RUN POST METHOD --------------
 
       const runPost = async () => {
+        setLoadingmethod(true);
         console.log("Post method triggered...");
         const confirm = window.confirm(`Are you sure you want to POST ${selectedData.length} orders?`);
         if (!confirm){
@@ -563,6 +587,7 @@ const Index = () => {
                   setShowFlagLog(false);
                   setShowCancelLog(false);
                   fetchData();
+                  setLoadingmethod(false);
               });
 
               // Check if any data in response is NOT FOUND from netlifes API
@@ -584,62 +609,49 @@ const Index = () => {
           } catch (error) {
               console.error('Error posting orders:', error);
               toast.error('An error occurred while posting the orders');
+              setLoadingmethod(false);
           }
         }
       }
 
 
+      //  --------------------------------------- SORTING AND FILTERING ---------------------------------------
 
-      //  --------------- SERTING TABLE --------------
+
+      //  --------------- SORTING TABLE --------------
 
       const sortTable = (column: string) => {
         const sortedData = [...data]; // clone data array
         let direction: 'asc' | 'desc' = sortDirection === 'asc' ? 'desc' : 'asc';
-      
-        if (column === 'status') {
-          sortedData.sort((a, b) => {
-            const getStatusPriority = (item: DataArray) => {
-              if (item.paid > 0) return 3; 
-              if (item.cnt > 0) return 2; 
-              return 1; 
-            };
-      
-            const statusA = getStatusPriority(a);
-            const statusB = getStatusPriority(b);
-      
-            return direction === 'asc' ? statusA - statusB : statusB - statusA;
-          });
-        } else if (column === 'inserted') {
-          sortedData.sort((a, b) => {
-            const dateA = new Date(a.inserted).getTime();
-            const dateB = new Date(b.inserted).getTime();
-            return direction === 'asc' ? dateA - dateB : dateB - dateA;
-          });
-        } else if (column === "flag"){
-          
+     
+        if (column === "flag"){
             sortedData.sort((a, b) => {
               const getFlagPriority = (item: DataArray) => {
                 return item.pol_flag ? 1 : 2;
             };
             const flagA = getFlagPriority(a);
             const flagB = getFlagPriority(b);
-        
             return direction === 'asc' ? flagA - flagB : flagB - flagA;
             });
-        }
-          
-      
+        } else if (column === 'inserted') {
+          sortedData.sort((a, b) => {
+            const dateA = new Date(a.inserted).getTime();
+            const dateB = new Date(b.inserted).getTime();
+            return direction === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+        } 
         setSortColumn(column);
         setSortDirection(direction);
         setData(sortedData);
       };
 
 
+      //  --------------- PORTAL TABLE SELECT --------------
+
       const handlePortalSelect = (portal: string) => {
         const sortedData = [...data]; // clone the data array
         console.log('selectedValue', portal); 
         setShowPortalSelect(false);
-        // setSelectedPortal(portal);
       
         if (portal === "all") {
           setData(sortedData); 
@@ -652,7 +664,7 @@ const Index = () => {
             } else if (a.portaluuid !== portal && b.portaluuid === portal) {
               return 1; 
             }
-            // If both or neither match the selectedValue, sort by inserted date
+            // If both or none match the selectedValue, sort by inserted date
             const dateA = new Date(a.inserted).getTime();
             const dateB = new Date(b.inserted).getTime();
             return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
@@ -661,6 +673,8 @@ const Index = () => {
           setData(sortedByPortal);
         }
       };
+
+      //  --------------- ORGIINATING TABLE SELECT --------------
 
       const handleOriginatingSelect = (origin: string) => {
         const sortedData = [...data]; 
@@ -688,7 +702,71 @@ const Index = () => {
         }
       };
 
+
+      //  ------------------ STATUS TABLE SELECT -----------------
+
+      const handleStatusSelect = (status: string) => {
+        const sortedData = [...data]; 
+        console.log('selectedValue', status); 
+        setShowStatusSelect(false); 
       
+        let sortedByStatus: DataArray[] = [];
+      
+        if (status === "all") {
+          sortedByStatus = sortedData;
+        } else {
+          if (status === "Green") {
+            // Move all items with paid > 0 to the top
+            sortedByStatus = sortedData.sort((a, b) => {
+              if (a.paid > 0 && b.paid === 0) return -1;
+              if (a.paid === 0 && b.paid > 0) return 1;
+              return 0; 
+            });
+          } else if (status === "Yellow") {
+            // Move all items with cnt > 0 to the top
+            sortedByStatus = sortedData.sort((a, b) => {
+              // Check if a and b meet the condition cnt > 0 and is not null
+              const isATop = (a.cnt !== null && a.cnt > 0) && a.paid === 0;
+              const isBTop = (b.cnt !== null && b.cnt > 0) && b.paid === 0;
+
+              // Place such tuples at the top
+              if (isATop && !isBTop) return -1;  // a should come before b
+              if (!isATop && isBTop) return 1;   // b should come before a
+
+              // If both or neither meet the condition, leave order unchanged
+              return 0;
+            });
+          } else if (status === "Red") {
+            // Move all items with cnt === 0 and paid === 0 to the top
+            sortedByStatus = sortedData.sort((a, b) => {
+              const isARed = (a.cnt === null || a.cnt === 0) && a.paid === 0
+              const isBRed = b.cnt === 0 && b.paid === 0;
+              if (isARed && !isBRed) return -1;
+              if (!isARed && isBRed) return 1;
+              return 0; 
+            });
+          }
+        }
+        setData(sortedByStatus); 
+      };
+      
+      
+
+       //  ------------------ ODERUUID SEARCH -----------------
+
+       const handleOrderuuidSearch = (search: string) => {
+        const clonedData = [...data]; 
+        setSearchString(search);
+        console.log('clonedData', clonedData);
+        console.log('selectedValue', search); 
+
+        const matchedData = clonedData.filter((item) => item.orderuuid.includes(search))
+        console.log('matchedData', matchedData);
+
+        setSearchData(matchedData);
+        
+      };
+
 
     
       useEffect(() => {
@@ -713,6 +791,12 @@ const Index = () => {
           }
           if (originatingSelectRef.current && !originatingSelectRef.current.contains(event.target as Node)) {
             setShowOriginatingSelect(false);
+          }
+          if (statusSelectRef.current && !statusSelectRef.current.contains(event.target as Node)) {
+            setShowStatusSelect(false);
+          }
+          if (orderuuidSearchRef.current && !orderuuidSearchRef.current.contains(event.target as Node)) {
+            setShowSearchOrderuuid(false);
           }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -740,8 +824,59 @@ const Index = () => {
           <table className='table ' >
               <thead>
                 <tr>
-                  <th onClick={() => sortTable("status")} className='table-header'>Status <FontAwesomeIcon icon={faSort} className='' title="Sort Status" /></th>
-                  <th>OrderUuid</th>
+                  <th onClick={() => setShowStatusSelect(!showStatusSelect)} className='table-header'>Status <FontAwesomeIcon icon={faSortDown} className='' title="Sort Status" style={{ marginBottom: "0.2em" }}  />
+                  {showStatusSelect && (
+                        <div
+                          ref={statusSelectRef}
+                          className="table-header-select"
+                        >
+                          <div
+                            className='table-header-select-option'
+                            onClick={() => handleStatusSelect('all')}
+                          >
+                            All
+                          </div>
+                          {uniqueStatus.map((status) => (
+                            <div
+                              key={status}
+                              className='table-header-select-option'
+                              onClick={() => handleStatusSelect(status)}
+                            >
+                              <div className='d-flex justify-content-between'>
+                                {status} 
+                                {status === "Green" ? <FontAwesomeIcon icon={faCircle} className='status-green'/> : status === "Yellow" ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : status === "Red" ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </th>
+                  <th onClick={() => setShowSearchOrderuuid(true)} className='table-header'>OrderUuid <FontAwesomeIcon icon={faMagnifyingGlass} className={`${searchString !== "" ? "table-header-icoon-magnifyingglas" : ""}`} /> 
+                    {showSearchOrderuuid && (
+                          <div
+                            ref={orderuuidSearchRef}
+                            className=""
+                          > 
+                              <input 
+                                autoFocus
+                                className="table-header-search" 
+                                value={searchString}
+                                onChange={(e) => handleOrderuuidSearch(e.target.value)}
+                                placeholder="Search.."
+                                >
+                              </input>
+                              {searchString && (
+                              <button 
+                                title="Clear Search"
+                                className='close-searchbox-button'
+                                onClick={() => setSearchString("")}
+                              >
+                                &times;
+                            </button>
+                            )}
+                          </div>
+                        )}
+                  </th>
                   <th onClick={() => setShowPortalSelect(!showPortalSelect)} className='table-header'>Portal <FontAwesomeIcon icon={faSortDown} className='table-header' title="Sort Portal" style={{ marginBottom: "0.2em" }} />
                       {showPortalSelect && (
                         <div
@@ -803,7 +938,7 @@ const Index = () => {
                       <Spinner />
                     </tr>
                   ) : data.length > 0 ? (
-                      data.map((item) => (
+                      (searchString !== "" ? searchData : data).map((item) => (
                           <tr className={`table-row ${selectedData.some(i => i.orderuuid === item.orderuuid) ? "selected-row" : ""}`} key={item.orderuuid}
                               onClick={(e) => {
                                 const target = e.target as HTMLTableCellElement; 
@@ -834,7 +969,7 @@ const Index = () => {
             </table>
             <div>
               <div>
-                <h6>Amount of orders: {data && data.length}</h6>
+                <h6>Amount of orders: {searchString !== "" ? searchData.length : data.length}</h6>
               </div>
             </div>
         </div>
@@ -1013,7 +1148,10 @@ const Index = () => {
         </div>
     </div>
 
-
+      {loadingMethod &&(        
+      <SpinnerMethod />       
+       )}
+        
       <ToastContainer
                 position="bottom-center"
                 autoClose={2000}

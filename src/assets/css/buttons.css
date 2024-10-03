@@ -97,6 +97,25 @@
     /* border: 1px solid rgba(82, 82, 82, 0.5); */
 }
 
+.close-searchbox-button{
+    position: absolute;
+    left: 11.5em; 
+    top: 1.7em;
+    /* margin-top: 0.4em; */
+    cursor: pointer;
+    font-size: 2em; 
+    background-color: inherit;
+    color: white; 
+    z-index: 10000000000; 
+    border: none;
+    outline: none;
+}
+.close-searchbox-button:hover{
+    color: grey;
+}
+.close-searchbox-button:focus{
+    outline: none;
+}
 
 
 @media screen and (max-width: 1000px) {

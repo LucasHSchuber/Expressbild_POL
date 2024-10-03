@@ -1,4 +1,6 @@
 /* Spinner.css */
+
+/* SPINNER */
 .spinner-container {
   display: flex;
   /* position: fixed; */
@@ -21,6 +23,41 @@
 
 .spinner-container p{
   font-size: 1.2em;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* SPINNER METHOD */
+.spinner-method-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  border-left: 3px solid #bababa;
+  border-top: 3px solid #bababa;
+  padding: 1em;
+}
+
+.spinner-method {
+  border: 8px solid rgba(255, 255, 255);
+  border-left-color: #5e5e5e;
+  border-radius: 50%;
+  width: 50px; 
+  height: 50px;
+  margin-left: 25%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-method-container p{
+  font-size: 0.9em;
   font-weight: 500;
 }
 
