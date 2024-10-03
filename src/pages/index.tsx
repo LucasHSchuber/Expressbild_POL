@@ -721,21 +721,16 @@ const Index = () => {
               return 0; 
             });
           } else if (status === "Returned") {
-            // Move all items with cnt > 0 to the top
             sortedByStatus = sortedData.sort((a, b) => {
               // Check if a and b meet the condition cnt > 0 and is not null
               const isATop = (a.cnt !== null && a.cnt > 0) && a.paid === 0;
               const isBTop = (b.cnt !== null && b.cnt > 0) && b.paid === 0;
-
               // Place such tuples at the top
-              if (isATop && !isBTop) return -1;  // a should come before b
-              if (!isATop && isBTop) return 1;   // b should come before a
-
-              // If both or neither meet the condition, leave order unchanged
+              if (isATop && !isBTop) return -1;  
+              if (!isATop && isBTop) return 1;   
               return 0;
             });
           } else if (status === "None") {
-            // Move all items with cnt === 0 and paid === 0 to the top
             sortedByStatus = sortedData.sort((a, b) => {
               const isARed = (a.cnt === null || a.cnt === 0) && a.paid === 0
               const isBRed = b.cnt === 0 && b.paid === 0;
