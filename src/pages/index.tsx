@@ -78,10 +78,8 @@ const Index = () => {
   useEffect(() => {
     let _uniqueOriginating: string [] = [];
     uniqueOriginatingSet.forEach((item) => {
-      // Split the item by "/" and log the first part
       const parts = item.split("/");
       const firstPart = parts[0]; 
-      // console.log(parts[0]); // Log the first part after the split
       if (!_uniqueOriginating.includes(parts[0])) {
         _uniqueOriginating.push(firstPart);
       }
@@ -98,7 +96,6 @@ const Index = () => {
       const fetchToken = () => {
         if (!ENV.isProduction) {
           setToken(ENV.token);
-          console.log(token);
           console.log("Running development");
         } else {
           console.log("Running production");
@@ -106,7 +103,6 @@ const Index = () => {
           const queryParams = new URLSearchParams(location.search);
           const token = queryParams.get('token');
           if (token !== null) {
-            console.log(token);
             setToken(token);
           } else {
             console.log("Token not found in URL");
@@ -127,7 +123,6 @@ const Index = () => {
             const response = await axios.get<{ data: DataArray[] }>(`${ENV.API_URL}api/alldata`);
             console.log(response.data);
             if (response.status === 200) {
-                console.log("Status = 200");
                 setData(response.data.data);
                 console.log('response.data', response.data.data);
                 setLoading(false);
@@ -487,8 +482,6 @@ const Index = () => {
               }  else {
                 toast.success("Successfully cancelled all orders");
               }
-              
-              // setCancelLog(cancelLog);
           } catch (error) {
               console.error('Error cancelling orders:', error);
               toast.error('An error occurred while cancelling the orders');
@@ -662,7 +655,6 @@ const Index = () => {
             } else if (a.portaluuid !== portal && b.portaluuid === portal) {
               return 1; 
             }
-            // If both or none match the selectedValue, sort by inserted date
             const dateA = new Date(a.inserted).getTime();
             const dateB = new Date(b.inserted).getTime();
             return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
@@ -690,7 +682,6 @@ const Index = () => {
             } else if (a.originating.split("/")[0] !== origin && b.originating.split("/")[0] === origin) {
               return 1; 
             }
-            // If both or neither match the selectedValue, sort by inserted date
             const dateA = new Date(a.inserted).getTime();
             const dateB = new Date(b.inserted).getTime();
             return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;

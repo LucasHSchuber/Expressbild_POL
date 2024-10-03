@@ -3,12 +3,10 @@
 /* SPINNER */
 .spinner-container {
   display: flex;
-  /* position: fixed; */
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 50vh; 
-  /* width: 50em; */
   margin-right: -22em !important;
 }
 
