@@ -67,17 +67,15 @@ const Index = () => {
   const [token, setToken] = useState("");
 
   // Get unique portaluuids from the data
-  const uniqueStatus = ["Green", "Yellow", "Red"];
+  const uniqueStatus = ["Paid", "Returned", "None"];
   // Get unique portaluuids from the data
   const uniquePortals = [...new Set(data.map((item) => item.portaluuid))];
   // Get unique originating from the data
   useEffect(() => {
-    console.log("started")
     const _uniqueOriginatingSet = [...new Set(data.map((item) => item.originating))];
     setUniqueOriginatingSet(_uniqueOriginatingSet);
   }, [data]);
   useEffect(() => {
-    console.log("started2")
     let _uniqueOriginating: string [] = [];
     uniqueOriginatingSet.forEach((item) => {
       // Split the item by "/" and log the first part
@@ -715,14 +713,14 @@ const Index = () => {
         if (status === "all") {
           sortedByStatus = sortedData;
         } else {
-          if (status === "Green") {
+          if (status === "Paid") {
             // Move all items with paid > 0 to the top
             sortedByStatus = sortedData.sort((a, b) => {
               if (a.paid > 0 && b.paid === 0) return -1;
               if (a.paid === 0 && b.paid > 0) return 1;
               return 0; 
             });
-          } else if (status === "Yellow") {
+          } else if (status === "Returned") {
             // Move all items with cnt > 0 to the top
             sortedByStatus = sortedData.sort((a, b) => {
               // Check if a and b meet the condition cnt > 0 and is not null
@@ -736,7 +734,7 @@ const Index = () => {
               // If both or neither meet the condition, leave order unchanged
               return 0;
             });
-          } else if (status === "Red") {
+          } else if (status === "None") {
             // Move all items with cnt === 0 and paid === 0 to the top
             sortedByStatus = sortedData.sort((a, b) => {
               const isARed = (a.cnt === null || a.cnt === 0) && a.paid === 0
@@ -768,21 +766,6 @@ const Index = () => {
       };
 
 
-    
-      useEffect(() => {
-        console.log('filteredData', filteredData);
-      }, [filteredData]);
-
-      
-
-      useEffect(() => {
-        console.log('flagLog', flagLog);
-        console.log('externalLog', externalLog);
-        console.log('cancelLog', cancelLog);
-        console.log('postLog', postLog);
-      }, [flagLog, externalLog, postLog, cancelLog]);
-
-
       // Close dropdowns when clicking outside
       useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -807,6 +790,13 @@ const Index = () => {
 
 
 
+      const [fontSize, setFontSize] = useState<string>("fontsize-12");
+
+      const changeFontSize = (fontSize: string) => {
+        setFontSize(fontSize);
+        console.log('fontsize', fontSize);
+      };
+
   return (
   <div className='wrapper'>
 
@@ -815,13 +805,30 @@ const Index = () => {
         <h6>POL - Proof Of Life</h6>
         <p>Your system to handle orders</p>
     </div>
+         
+    <div className='mt-4 d-flex user-selector-box'>
+      <div>
+        <label className='mr-2'>Table Font Size: </label>
+        <select
+          className="font-size-select"
+          value={fontSize}
+          onChange={(e) => changeFontSize(e.target.value)}
+        >
+          <option value="fontsize-8">8px</option>
+          <option value="fontsize-10">10px</option>
+          <option value="fontsize-12">12px</option>
+          <option value="fontsize-14">14px</option>
+          <option value="fontsize-16">16px</option>
+        </select>
+      </div>
+    </div>    
 
     {/* CONTENT */}
-    <div className='content-wrapper mt-5'>
+    <div className='content-wrapper mt-3'>
 
         <div className='table-wrapper'>
           {/* TABLE */}
-          <table className='table ' >
+          <table className={`table ${fontSize ? fontSize: " "}`} >
               <thead>
                 <tr>
                   <th onClick={() => setShowStatusSelect(!showStatusSelect)} className='table-header'>Status <FontAwesomeIcon icon={faSortDown} className='' title="Sort Status" style={{ marginBottom: "0.2em" }}  />
@@ -844,7 +851,7 @@ const Index = () => {
                             >
                               <div className='d-flex justify-content-between'>
                                 {status} 
-                                {status === "Green" ? <FontAwesomeIcon icon={faCircle} className='status-green'/> : status === "Yellow" ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : status === "Red" ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
+                                {status === "Paid" ? <FontAwesomeIcon icon={faCircle} className='status-green'/> : status === "Returned" ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : status === "None" ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
                               </div>
                             </div>
                           ))}
