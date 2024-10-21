@@ -124,6 +124,7 @@ thead th {
     z-index: 1000 !important;
     outline: none;
     box-shadow: 0px 1px 5px 1px rgba(255, 255, 255, 0.6);
+    border-radius: 30px;
 }
 .table-header-icoon-magnifyingglas{
     color: rgb(0, 255, 0);
@@ -134,6 +135,9 @@ thead th {
 }
 .selected-row{
     background-color: rgb(28, 28, 28);
+}
+.markasgreen-row{
+    background-color: rgb(68, 92, 52);
 }
 .selected-data-box{ 
     background-color: rgb(40, 40, 40);

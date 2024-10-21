@@ -17,6 +17,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ENV from '../../env.js'; 
+console.log('ENV', ENV);
 // import API_CONFIG from '../../apiConfig.js'; 
 
 //import interfaces
@@ -29,8 +30,10 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMethod, setLoadingmethod] = useState(false);
   const [data, setData] = useState<DataArray[]>([]);
+  const [flaggedOrders, setFlaggedOrders] = useState<DataArray[]>([]);
   const [searchData, setSearchData] = useState<DataArray[]>([]);
   const [selectedData, setSelectedData] = useState<DataArray[]>([]);
+  const [markRowGreen, setMarkRowGreen] = useState<DataArray[]>([]);
 
   const [uniqueOriginatingArray, setUniqueOriginatingArray] = useState<string[]>([]);
   const [uniqueOriginatingSet, setUniqueOriginatingSet] = useState<string[]>([]);
@@ -46,10 +49,8 @@ const Index = () => {
 
   const [postLog, setPostLog] = useState<PostLogEntry[]>([]);
   const [showPostLog, setShowPostLog] = useState(false);
-  // sort column
-  const [sortColumn, setSortColumn] = useState<string>(''); 
+
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); 
-  const [filteredData, setFilteredData] = useState(data);
 // portal select
   const [showPortalSelect, setShowPortalSelect] = useState(false);
   const portalSelectRef = useRef<HTMLDivElement>(null);
@@ -65,6 +66,16 @@ const Index = () => {
   const [searchString, setSearchString] = useState("");
 
   const [token, setToken] = useState("");
+
+  const [fontSize, setFontSize] = useState<string>("fontsize-12");
+
+
+
+  useEffect(() => {
+    console.log('markRowGreen', markRowGreen);
+  }, [markRowGreen]);
+
+
 
   // Get unique portaluuids from the data
   const uniqueStatus = ["Paid", "Returned", "None"];
@@ -125,6 +136,9 @@ const Index = () => {
             if (response.status === 200) {
                 setData(response.data.data);
                 console.log('response.data', response.data.data);
+                const flaggedorders = response.data.data.filter(item => item.pol_flag !== null);
+                // console.log('flaggedOrders', flaggedorders);
+                setFlaggedOrders(flaggedorders)
                 setLoading(false);
             } else {
                 console.log("Could not fetch data from /alldata");
@@ -259,12 +273,13 @@ const Index = () => {
       //  --------------- RUN FLAG METHOD (on multiple orders) --------------
 
       const runFlag = async () => {
-        setLoadingmethod(true);
+        
         console.log("Flag method triggered...");
         const confirm = window.confirm(`Are you sure you want to FLAG ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
+          setLoadingmethod(true);
           console.log('triggered!');
           try {
               // Use Promise.all to handle multiple requests concurrently
@@ -283,13 +298,19 @@ const Index = () => {
               // Handle responses if necessary
               console.log('All orders flagged successfully:', responses);
               const flagLog = responses.map(data => data.data);
+              // Mark table row as green if statuscode = 200
+              responses.forEach((data) => {
+                if (data.data.statuscode === 200) {
+                  setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, data.data.updated]);
+                }
+              });              
               toast.success("Successfully flagged all orders");
               setFlagLog(flagLog);
               setShowFlagLog(true);
               setShowExternalLog(false);
               setShowCancelLog(false);
               setShowPostLog(false);
-              fetchData();
+              // fetchData();
               setLoadingmethod(false);
           } catch (error) {
               console.error('Error flagging orders:', error);
@@ -303,13 +324,13 @@ const Index = () => {
        //  --------------- RUN FLAG METHOD (one order) --------------
 
        const runFlagSingleOrder = async (item: DataArray) => {
-        setLoadingmethod(true);
         console.log("runFlagSingleOrder method triggered...");
         console.log('item', item);
         const confirm = window.confirm(`Are you sure you want to FLAG the order`);
         if (!confirm){
           return;
         } else {
+          setLoadingmethod(true);
           console.log('triggered!');
           try {
                 console.log('order', item.orderuuid);
@@ -323,6 +344,10 @@ const Index = () => {
                 });
                 // Handle responses if necessary
               console.log('Order flagged successfully:', response.data);
+               // Mark table row as green if statuscode = 200
+              if (response.data.statuscode === 200) {
+                setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, response.data.updated]);
+              } 
               toast.success("Successfully flagged the order");
               setFlagLog((prevFlagLog) => [...prevFlagLog, response.data]);
               setShowFlagLog(true);
@@ -330,7 +355,7 @@ const Index = () => {
               setShowCancelLog(false);
               setShowPostLog(false);
               setLoadingmethod(false);
-              fetchData();
+              // fetchData();
           } catch (error) {
               console.error('Error flagging order:', error);
               toast.error('An error occurred while flagging the order');
@@ -344,13 +369,13 @@ const Index = () => {
       //  --------------- RUN EXTERNAL METHOD --------------
 
       const runExternal = async (item: DataArray) => {
-        setLoadingmethod(true);
         console.log("EXTERNAL method triggered...");
         const confirm = window.confirm(`Are you sure you want to run EXTERNAL on order: ${item.orderuuid}?`);
         if (!confirm){
           return;
         } else {
           console.log('triggered!');
+          setLoadingmethod(true);
           try {
                 console.log('order', item.orderuuid);
                 const response = await axios.post(`${ENV.API_URL}api/fixed`, {
@@ -361,8 +386,12 @@ const Index = () => {
                         'Content-Type': 'application/json',
                     }
                 });
-                // Handle responses if necessary
-              console.log('All orders flagged successfully:', response);
+              console.log('All orders ran external successfully:', response);
+              // Mark table row as green if statuscode = 200
+              if (response.data.statuscode === 200) {
+                setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, response.data.updated]);
+              } 
+   
               toast.success("Successfully ran external on order");
               setExternalLog((prevExternalLog) => [...prevExternalLog, response.data]);
               setShowExternalLog(true);
@@ -383,13 +412,13 @@ const Index = () => {
       //  --------------- RUN CANCEL METHOD --------------
 
       const runCancel = async () => {
-        setLoadingmethod(true);
         console.log("Cancel method triggered...");
         const confirm = window.confirm(`Are you sure you want to CANCEL ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
           console.log('triggered!');
+          setLoadingmethod(true);
           // Update net_orders
           try {
               // Use Promise.all to handle multiple requests concurrently
@@ -433,8 +462,9 @@ const Index = () => {
               }));
               // Handle responses if necessary
               console.log('All orders cancelled successfully:', responses);
+
               const cancelLogArray: CancelLogEntry[] = [];
-              responses.forEach((element) => {
+              responses.forEach((element: any) => {
                   console.log('cancelresponse', element?.cancelResponse);
                   console.log('statusResponse', element?.statusResponse);
 
@@ -459,12 +489,19 @@ const Index = () => {
                   cancelLogArray.push(logEntry);
                   console.log('logEntry', logEntry);
                   console.log('cancelLogArray', cancelLogArray);
+
+                  // Mark table row as green if statuscode = 200 and result is "OK"
+                  if (element.cancelResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
+                    console.log("OK!!!");
+                    setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.cancelResponse.data.updated]);
+                  }
+                
                   setCancelLog(cancelLogArray);
                   setShowCancelLog(true);
                   setShowExternalLog(false);
                   setShowFlagLog(false);
                   setShowPostLog(false);
-                  fetchData();
+                  // fetchData();
                   setLoadingmethod(false);
               });
 
@@ -496,12 +533,12 @@ const Index = () => {
       //  --------------- RUN POST METHOD --------------
 
       const runPost = async () => {
-        setLoadingmethod(true);
         console.log("Post method triggered...");
         const confirm = window.confirm(`Are you sure you want to POST ${selectedData.length} orders?`);
         if (!confirm){
           return;
         } else {
+          setLoadingmethod(true);
           console.log('triggered!');
           // Update net_orders
           try {
@@ -547,7 +584,7 @@ const Index = () => {
               // Handle responses if necessary
               console.log('All orders posted successfully:', responses);
               const postLogArray: PostLogEntry[] = [];
-              responses.forEach((element) => {
+              responses.forEach((element: any) => {
                   console.log('postResponse', element?.postResponse);
                   console.log('statusResponse', element?.statusResponse);
 
@@ -572,12 +609,19 @@ const Index = () => {
                   postLogArray.push(logEntry);
                   console.log('logEntry', logEntry);
                   console.log('cancelLogArray', postLogArray);
+
+                  // Mark table row as green if statuscode = 200 and result is "OK"
+                  if (element.postResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
+                    console.log("OK!!!");
+                    setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.postResponse.data.updated]);
+                  }
+                
                   setPostLog(postLogArray);
                   setShowPostLog(true);
                   setShowExternalLog(false);
                   setShowFlagLog(false);
                   setShowCancelLog(false);
-                  fetchData();
+                  // fetchData();
                   setLoadingmethod(false);
               });
 
@@ -606,6 +650,10 @@ const Index = () => {
       }
 
 
+
+
+
+
       //  --------------------------------------- SORTING AND FILTERING ---------------------------------------
 
 
@@ -631,7 +679,7 @@ const Index = () => {
             return direction === 'asc' ? dateA - dateB : dateB - dateA;
           });
         } 
-        setSortColumn(column);
+        // setSortColumn(column);
         setSortDirection(direction);
         setData(sortedData);
       };
@@ -776,7 +824,7 @@ const Index = () => {
 
 
 
-      const [fontSize, setFontSize] = useState<string>("fontsize-12");
+      
 
       const changeFontSize = (fontSize: string) => {
         setFontSize(fontSize);
@@ -789,7 +837,7 @@ const Index = () => {
     {/* HEADER */}
     <div className='header-box'>
         <h6>POL - Proof Of Life</h6>
-        <p>Your system to handle orders</p>
+        {/* <p>Your system to handle orders</p> */}
     </div>
          
     <div className='mt-4 d-flex user-selector-box'>
@@ -855,7 +903,7 @@ const Index = () => {
                                 className="table-header-search" 
                                 value={searchString}
                                 onChange={(e) => handleOrderuuidSearch(e.target.value)}
-                                placeholder="Search.."
+                                placeholder=" Search.."
                                 >
                               </input>
                               {searchString && (
@@ -870,6 +918,7 @@ const Index = () => {
                           </div>
                         )}
                   </th>
+                  <th className='table-header'>Subject</th>
                   <th onClick={() => setShowPortalSelect(!showPortalSelect)} className='table-header'>Portal <FontAwesomeIcon icon={faSortDown} className='table-header' title="Sort Portal" style={{ marginBottom: "0.2em" }} />
                       {showPortalSelect && (
                         <div
@@ -931,8 +980,8 @@ const Index = () => {
                       <Spinner />
                     </tr>
                   ) : data.length > 0 ? (
-                      (searchString !== "" ? searchData : data).map((item) => (
-                          <tr className={`table-row ${selectedData.some(i => i.orderuuid === item.orderuuid) ? "selected-row" : ""}`} key={item.orderuuid}
+                      (searchString !== "" ? searchData : data).map((item: any) => (
+                          <tr className={`table-row ${markRowGreen.includes(item.orderuuid) ? "markasgreen-row" : selectedData.some(i => i.orderuuid === item.orderuuid) ? "selected-row" : ""}`} key={item.orderuuid}
                               onClick={(e) => {
                                 const target = e.target as HTMLTableCellElement; 
                                 if (target.cellIndex < 5) {
@@ -943,6 +992,7 @@ const Index = () => {
                                 {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' title="Paid" /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' title="Returned" /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' title="None" /> : "-"}
                               </td>
                               <td title={item.orderuuid}>{item.orderuuid.length > 12 ? item.orderuuid.substring(0, 12) + '...' : item.orderuuid}</td>
+                              <td title={item.subjectname}>{item.subjectname.length > 10 ? item.subjectname.substring(0, 10) + '...' : item.subjectname}</td>
                               <td title={getPortalName(item.portaluuid)}>{getPortalName(item.portaluuid)}</td>
                               <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td>
                               <td>{getOriginatingPrefix(item.originating)}</td>
@@ -963,6 +1013,7 @@ const Index = () => {
             <div>
               <div>
                 <h6>Amount of orders: {searchString !== "" ? searchData.length : data.length}</h6>
+                <h6><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon-flag' /> {flaggedOrders.length}</h6>
               </div>
             </div>
         </div>
@@ -1147,7 +1198,7 @@ const Index = () => {
         
       <ToastContainer
                 position="bottom-center"
-                autoClose={2000}
+                autoClose={3000}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick
@@ -1155,7 +1206,7 @@ const Index = () => {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme="dark" // light, dark, or colored
+                theme="dark" // light, dark, colored
                 style={{ width: "400px", fontSize: "1rem" }}
                 // toastClassName="custom-toast"
                 // bodyClassName="custom-toast-body"

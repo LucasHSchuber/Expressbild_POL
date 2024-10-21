@@ -7,7 +7,8 @@ export interface DataArray {
     paid: number,
     portaluuid: string,
     updated: string,
-    pol_flag: string
+    pol_flag: string,
+    subjectname: string,
   }
   export interface FlagLogEntry {
     message: string,
