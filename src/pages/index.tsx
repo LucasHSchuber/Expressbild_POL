@@ -17,7 +17,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ENV from '../../env.js'; 
-console.log('ENV', ENV);
+// console.log('ENV', ENV);
 // import API_CONFIG from '../../apiConfig.js'; 
 
 //import interfaces
@@ -71,9 +71,9 @@ const Index = () => {
 
 
 
-  useEffect(() => {
-    console.log('markRowGreen', markRowGreen);
-  }, [markRowGreen]);
+  // useEffect(() => {
+  //   console.log('markRowGreen', markRowGreen);
+  // }, [markRowGreen]);
 
 
 
@@ -158,7 +158,6 @@ const Index = () => {
 
       const getOriginatingPrefix = (originating: string) =>{
         const firstPart = originating.split("/")
-        // console.log('firstPart', firstPart);
         return firstPart[0];
       }
       const getPortalName = (portal: string) =>{
@@ -269,6 +268,25 @@ const Index = () => {
       //  ------------------------------------------- METHODS -------------------------------------------
 
 
+      // ------------- VALIDATE TOKEN -----------------
+
+      const validateToken = async () => {
+        try {
+          const response = await axios.get(
+            `/api/index.php/rest/auth/validate_token/${token}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          console.log('Token repsonse', response.data.result);
+          return response.data.result;
+          
+        } catch (error) {
+          console.error('Error validating token:', error);
+        }
+      };
 
       //  --------------- RUN FLAG METHOD (on multiple orders) --------------
 
@@ -279,8 +297,15 @@ const Index = () => {
         if (!confirm){
           return;
         } else {
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
           setLoadingmethod(true);
-          console.log('triggered!');
+          
           try {
               // Use Promise.all to handle multiple requests concurrently
               const responses = await Promise.all(selectedData.map(order => {
@@ -324,14 +349,21 @@ const Index = () => {
        //  --------------- RUN FLAG METHOD (one order) --------------
 
        const runFlagSingleOrder = async (item: DataArray) => {
-        console.log("runFlagSingleOrder method triggered...");
+        // console.log("runFlagSingleOrder method triggered...");
         console.log('item', item);
         const confirm = window.confirm(`Are you sure you want to FLAG the order`);
         if (!confirm){
           return;
         } else {
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
           setLoadingmethod(true);
-          console.log('triggered!');
+
           try {
                 console.log('order', item.orderuuid);
                 const response = await axios.post(`${ENV.API_URL}api/flag`, {
@@ -374,7 +406,13 @@ const Index = () => {
         if (!confirm){
           return;
         } else {
-          console.log('triggered!');
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
           setLoadingmethod(true);
           try {
                 console.log('order', item.orderuuid);
@@ -417,7 +455,13 @@ const Index = () => {
         if (!confirm){
           return;
         } else {
-          console.log('triggered!');
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
           setLoadingmethod(true);
           // Update net_orders
           try {
@@ -441,7 +485,7 @@ const Index = () => {
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
                         // orderuuid: order.orderuuid,
-                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        orderuuid: order.orderuuid, // change to order.orderuiid when in production mode
                         status: 99,
                         portaluuid: order.portaluuid
                       } , {
@@ -451,8 +495,8 @@ const Index = () => {
                         },
                       }
                     );
-                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                    // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
                     
                     return { cancelResponse: cancelResponse, statusResponse: statusResponse.data };
                   } catch (error) {
@@ -465,8 +509,8 @@ const Index = () => {
 
               const cancelLogArray: CancelLogEntry[] = [];
               responses.forEach((element: any) => {
-                  console.log('cancelresponse', element?.cancelResponse);
-                  console.log('statusResponse', element?.statusResponse);
+                  // console.log('cancelresponse', element?.cancelResponse);
+                  // console.log('statusResponse', element?.statusResponse);
 
                   const logEntry: CancelLogEntry = {
                     cancelResponse: element?.cancelResponse ? {
@@ -487,12 +531,11 @@ const Index = () => {
                     logEntry.statusResponse = element?.statusResponse?.result.message || "";
                   }
                   cancelLogArray.push(logEntry);
-                  console.log('logEntry', logEntry);
-                  console.log('cancelLogArray', cancelLogArray);
+                  // console.log('logEntry', logEntry);
+                  // console.log('cancelLogArray', cancelLogArray);
 
                   // Mark table row as green if statuscode = 200 and result is "OK"
                   if (element.cancelResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
-                    console.log("OK!!!");
                     setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.cancelResponse.data.updated]);
                   }
                 
@@ -538,8 +581,14 @@ const Index = () => {
         if (!confirm){
           return;
         } else {
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
           setLoadingmethod(true);
-          console.log('triggered!');
           // Update net_orders
           try {
               // Use Promise.all to handle multiple requests concurrently
@@ -556,13 +605,13 @@ const Index = () => {
                   console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
                    // Update netlife through REST API
                    let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
-                   console.log('order.orderuuid', order.orderuuid);
+                   
                    try {
                     console.log('sending orderuuid to netlife api with status 9: ');
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
                         // orderuuid: order.orderuuid,
-                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        orderuuid: order.orderuuid, // change to order.orderuiid when in production mode
                         status: 9,
                         portaluuid: order.portaluuid
                       } , {
@@ -572,8 +621,8 @@ const Index = () => {
                         },
                       }
                     );
-                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                    // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
                     
                     return { postResponse: postResponse, statusResponse: statusResponse.data };
                   } catch (error) {
@@ -585,8 +634,8 @@ const Index = () => {
               console.log('All orders posted successfully:', responses);
               const postLogArray: PostLogEntry[] = [];
               responses.forEach((element: any) => {
-                  console.log('postResponse', element?.postResponse);
-                  console.log('statusResponse', element?.statusResponse);
+                  // console.log('postResponse', element?.postResponse);
+                  // console.log('statusResponse', element?.statusResponse);
 
                   const logEntry: PostLogEntry = {
                     postResponse: element?.postResponse ? {
@@ -607,8 +656,6 @@ const Index = () => {
                     logEntry.statusResponse = element?.statusResponse?.result.message || "";
                   }
                   postLogArray.push(logEntry);
-                  console.log('logEntry', logEntry);
-                  console.log('cancelLogArray', postLogArray);
 
                   // Mark table row as green if statuscode = 200 and result is "OK"
                   if (element.postResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
@@ -823,13 +870,12 @@ const Index = () => {
       }, []);
 
 
-
-      
-
       const changeFontSize = (fontSize: string) => {
         setFontSize(fontSize);
         console.log('fontsize', fontSize);
       };
+
+
 
   return (
   <div className='wrapper'>
