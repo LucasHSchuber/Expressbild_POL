@@ -1,28 +1,20 @@
 // import React, { useState, useEffect } from 'react';
 import { useState, useEffect, useRef } from 'react';
-
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-
 // import spinners
 import Spinner from "../components/spinner.js"
 import SpinnerMethod from "../components/spinnerMethod.js"
-
 // import fotnawesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, faSquareUpRight, faSort, faSortDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-
 //import toastify
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import ENV from '../../env.js'; 
 // console.log('ENV', ENV);
-// import API_CONFIG from '../../apiConfig.js'; 
-
 //import interfaces
 import { DataArray, FlagLogEntry, ExternalLogEntry, CancelLogEntry, PostLogEntry,  } from '../interfaces/interfaces.js';
-
 
 
 const Index = () => {
@@ -69,11 +61,6 @@ const Index = () => {
 
   const [fontSize, setFontSize] = useState<string>("fontsize-12");
 
-
-
-  // useEffect(() => {
-  //   console.log('markRowGreen', markRowGreen);
-  // }, [markRowGreen]);
 
 
 
