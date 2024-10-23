@@ -116,25 +116,34 @@ const Index = () => {
     // -------------- FETCHING DATA FROM DATABASE METHOD ------------------
 
     const fetchData = async () => {
-        setLoading(true);
-          try {
-            const response = await axios.get<{ data: DataArray[] }>(`${ENV.API_URL}api/alldata`);
-            console.log(response.data);
-            if (response.status === 200) {
-                setData(response.data.data);
-                console.log('response.data', response.data.data);
-                const flaggedorders = response.data.data.filter(item => item.pol_flag !== null);
-                // console.log('flaggedOrders', flaggedorders);
-                setFlaggedOrders(flaggedorders)
-                setLoading(false);
-            } else {
-                console.log("Could not fetch data from /alldata");
-            }
 
-          } catch (error) {
-            console.error("There was an error fetching the data!", error);
-            setLoading(false);
-          }
+       // Fetch data only if valid token
+        const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Unable to load data due to invalid or missing token!");
+            return;
+          } else {
+            setLoading(true);
+            try {
+              const response = await axios.get<{ data: DataArray[] }>(`${ENV.API_URL}api/alldata`);
+              console.log(response.data);
+              if (response.status === 200) {
+                  setData(response.data.data);
+                  console.log('response.data', response.data.data);
+                  const flaggedorders = response.data.data.filter(item => item.pol_flag !== null);
+                  // console.log('flaggedOrders', flaggedorders);
+                  setFlaggedOrders(flaggedorders)
+                  setLoading(false);
+              } else {
+                  console.log("Could not fetch data from /alldata");
+              }
+
+            } catch (error) {
+              console.error("There was an error fetching the data!", error);
+              setLoading(false);
+            }
+      }
     }
       useEffect(() => {
           fetchData();
@@ -259,6 +268,7 @@ const Index = () => {
 
       const validateToken = async () => {
         try {
+          // const _token = "666ab2a5be8ee1.66302861";
           const response = await axios.get(
             `/api/index.php/rest/auth/validate_token/${token}`,
             {
@@ -472,7 +482,7 @@ const Index = () => {
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
                         // orderuuid: order.orderuuid,
-                        orderuuid: order.orderuuid, // change to order.orderuiid when in production mode
+                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
                         status: 99,
                         portaluuid: order.portaluuid
                       } , {
@@ -598,7 +608,7 @@ const Index = () => {
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
                         // orderuuid: order.orderuuid,
-                        orderuuid: order.orderuuid, // change to order.orderuiid when in production mode
+                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
                         status: 9,
                         portaluuid: order.portaluuid
                       } , {
