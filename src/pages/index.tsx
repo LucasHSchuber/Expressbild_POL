@@ -1,5 +1,5 @@
-// import React, { useState, useEffect } from 'react';
-import { useState, useEffect, useRef } from 'react';
+// import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 // import spinners
@@ -61,8 +61,8 @@ const Index = () => {
 
   const [fontSize, setFontSize] = useState<string>("fontsize-12");
 
-
-
+  const location = useLocation();
+  
 
   // Get unique portaluuids from the data
   const uniqueStatus = ["Paid", "Returned", "None"];
@@ -97,7 +97,6 @@ const Index = () => {
           console.log("Running development");
         } else {
           console.log("Running production");
-          const location = useLocation();
           const queryParams = new URLSearchParams(location.search);
           const token = queryParams.get('token');
           if (token !== null) {
