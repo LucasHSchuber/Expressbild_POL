@@ -475,14 +475,14 @@ const Index = () => {
                   });
                   console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
                    // Update netlife through REST API
-                   let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                  //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
                    console.log('order.orderuuid', order.orderuuid);
                    try {
                     console.log('sending orderuuid to netlife api with status 99: ');
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
-                        // orderuuid: order.orderuuid,
-                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        orderuuid: order.orderuuid,
+                        // orderuuid: order_uuid, // change to order.orderuiid when in production mode
                         status: 99,
                         portaluuid: order.portaluuid
                       } , {
@@ -601,14 +601,14 @@ const Index = () => {
                   });
                   console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
                    // Update netlife through REST API
-                   let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                  //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
                    
                    try {
                     console.log('sending orderuuid to netlife api with status 9: ');
                     const statusResponse = await axios.post(
                       '/api/index.php/rest/netlife/orderstatus', {
-                        // orderuuid: order.orderuuid,
-                        orderuuid: order_uuid, // change to order.orderuiid when in production mode
+                        orderuuid: order.orderuuid,
+                        // orderuuid: order_uuid, // change to order.orderuiid when in production mode
                         status: 9,
                         portaluuid: order.portaluuid
                       } , {
