@@ -62,7 +62,7 @@ const Index = () => {
   const [fontSize, setFontSize] = useState<string>("fontsize-12");
 
   const location = useLocation();
-  
+
 
   // Get unique portaluuids from the data
   const uniqueStatus = ["Paid", "Returned", "None"];
@@ -1039,7 +1039,16 @@ const Index = () => {
                               <td title={item.orderuuid}>{item.orderuuid.length > 12 ? item.orderuuid.substring(0, 12) + '...' : item.orderuuid}</td>
                               <td title={item.subjectname}>{item.subjectname.length > 10 ? item.subjectname.substring(0, 10) + '...' : item.subjectname}</td>
                               <td title={getPortalName(item.portaluuid)}>{getPortalName(item.portaluuid)}</td>
-                              <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td>
+                              {/* <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td> */}
+                              <td>
+                                {item.inserted && (() => {
+                                  const date = new Date(item.inserted);
+                                  const day = String(date.getDate()).padStart(2, '0'); 
+                                  const month = String(date.getMonth() + 1).padStart(2, '0'); 
+                                  return `${day}/${month}`; 
+                                })()}
+                              </td>
+
                               <td>{getOriginatingPrefix(item.originating)}</td>
                               <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' /></button></td>
                               <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td>
