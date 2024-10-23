@@ -116,12 +116,12 @@ const Index = () => {
     // -------------- FETCHING DATA FROM DATABASE METHOD ------------------
 
     const fetchData = async () => {
-
        // Fetch data only if valid token
-        const tokenResponse = await validateToken();
+          const tokenResponse = await validateToken();
           console.log('tokenResponse', tokenResponse);
-          if (tokenResponse === null || tokenResponse === ""){
-            toast.error("Unable to load data due to invalid or missing token!");
+          // if (tokenResponse === null || tokenResponse === "" || tokenResponse === undefined){
+            if (!tokenResponse){
+            toast.error("Unable to load order data due to invalid or missing token!");
             return;
           } else {
             setLoading(true);
@@ -146,8 +146,10 @@ const Index = () => {
       }
     }
       useEffect(() => {
+        if (token){
           fetchData();
-      }, []);
+        }  
+      }, [token]);
 
 
       // ---------- GETTING ORGIINATING PREFIX (by splitting strings and returning first value in array) -------------
@@ -284,6 +286,7 @@ const Index = () => {
           console.error('Error validating token:', error);
         }
       };
+
 
       //  --------------- RUN FLAG METHOD (on multiple orders) --------------
 
