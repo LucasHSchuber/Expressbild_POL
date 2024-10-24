@@ -446,6 +446,8 @@ const Index = () => {
       }
 
 
+
+
       //  --------------- RUN CANCEL METHOD --------------
 
       const runCancel = async () => {
@@ -464,108 +466,203 @@ const Index = () => {
           setLoadingmethod(true);
           // Update net_orders
           try {
-              // Use Promise.all to handle multiple requests concurrently
-              const responses = await Promise.all(selectedData.map(async (order) => {
-                  console.log('order', order.orderuuid);
-                  const cancelResponse = await axios.post(`${ENV.API_URL}api/cancel`, {
-                      orderuuid: order.orderuuid
+            const cancelLogArray = [];
+      
+            // Use loop to process each order 
+            for (const order of selectedData) {
+              console.log('order', order.orderuuid);
+      
+              try {
+                // Post to cancel the order
+                const cancelResponse = await axios.post(`${ENV.API_URL}api/cancel`, {
+                  orderuuid: order.orderuuid
+                }, {
+                  headers: {
+                    Authorization: `Admin ${token}`,
+                    'Content-Type': 'application/json',
+                  }
+                });
+                console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
+      
+                // Update netlife through REST API
+                // let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                console.log('sending orderuuid to netlife api with status 99: ');
+                const statusResponse = await axios.post(
+                  '/api/index.php/rest/netlife/orderstatus', {
+                    orderuuid: order.orderuuid,
+                    // orderuuid: order_uuid, // change when prod mode
+                    status: 99,
+                    portaluuid: order.portaluuid
                   }, {
-                      headers: {
-                          Authorization: `Admin ${token}`,
-                          'Content-Type': 'application/json',
-                      }
-                  });
-                  console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
-                   // Update netlife through REST API
-                  //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
-                   console.log('order.orderuuid', order.orderuuid);
-                   try {
-                    console.log('sending orderuuid to netlife api with status 99: ');
-                    const statusResponse = await axios.post(
-                      '/api/index.php/rest/netlife/orderstatus', {
-                        orderuuid: order.orderuuid,
-                        // orderuuid: order_uuid, // change to order.orderuiid when in production mode
-                        status: 99,
-                        portaluuid: order.portaluuid
-                      } , {
-                        headers: {
-                          Authorization: `Admin ${token}`,
-                          'Content-Type': 'application/json',
-                        },
-                      }
-                    );
-                    // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-                    // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
-                    
-                    return { cancelResponse: cancelResponse, statusResponse: statusResponse.data };
-                  } catch (error) {
-                    console.error('Error fetching news:', error);
+                    headers: {
+                      Authorization: `Admin ${token}`,
+                      'Content-Type': 'application/json',
+                    },
                   }
-                    
-              }));
-              // Handle responses if necessary
-              console.log('All orders cancelled successfully:', responses);
-
-              const cancelLogArray: CancelLogEntry[] = [];
-              responses.forEach((element: any) => {
-                  // console.log('cancelresponse', element?.cancelResponse);
-                  // console.log('statusResponse', element?.statusResponse);
-
-                  const logEntry: CancelLogEntry = {
-                    cancelResponse: element?.cancelResponse ? {
-                      message: element.cancelResponse.data.message,
-                      statuscode: element.cancelResponse.data.statuscode,
-                      orderuuid: element.cancelResponse.data.updated,
-                      timestamp: element.cancelResponse.data.timestamp,
-                      updated: element.cancelResponse.data.updated
-                    } : undefined,
-                    statusResponse: '', 
-                  };
-
-                  if (element?.statusResponse?.result.result === "OK") {
-                    console.log('statusresponse', element?.statusResponse.result);
-                    logEntry.statusResponse = element?.statusResponse.result.result || "";
-                  } else {
-                    console.log('statusresponse', element?.statusResponse?.result.message);
-                    logEntry.statusResponse = element?.statusResponse?.result.message || "";
-                  }
-                  cancelLogArray.push(logEntry);
-                  // console.log('logEntry', logEntry);
-                  // console.log('cancelLogArray', cancelLogArray);
-
-                  // Mark table row as green if statuscode = 200 and result is "OK"
-                  if (element.cancelResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
-                    setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.cancelResponse.data.updated]);
-                  }
-                
-                  setCancelLog(cancelLogArray);
-                  setShowCancelLog(true);
-                  setShowExternalLog(false);
-                  setShowFlagLog(false);
-                  setShowPostLog(false);
-                  // fetchData();
-                  setLoadingmethod(false);
-              });
-
-              // Check if any data in response is NOT FOUND from netlifes API
-              let validateResponse = "";
-              cancelLogArray.forEach(element => { 
-                console.log(element.statusResponse);
-                if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
-                  validateResponse = "true";
+                );
+      
+                // Log and handle responses
+                const logEntry = {
+                  cancelResponse: cancelResponse ? {
+                    message: cancelResponse.data.message,
+                    statuscode: cancelResponse.data.statuscode,
+                    orderuuid: cancelResponse.data.updated,
+                    timestamp: cancelResponse.data.timestamp,
+                    updated: cancelResponse.data.updated
+                  } : undefined,
+                  statusResponse: ''
+                };
+      
+                if (statusResponse?.data?.result?.result === "OK") {
+                  logEntry.statusResponse = statusResponse?.data?.result?.result || "";
+                } else {
+                  logEntry.statusResponse = statusResponse?.data?.result?.message || "";
                 }
-              });
-
-              if (validateResponse === "true"){
-                toast.error("Not all orders was updated in Netlife. Check 'Cancel Log' for more info");
-              }  else {
-                toast.success("Successfully cancelled all orders");
+      
+                cancelLogArray.push(logEntry);
+      
+                // Mark the row green if the cancel was successful
+                if (cancelResponse.data.statuscode === 200 && statusResponse?.data?.result?.result === "OK") {
+                  setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, cancelResponse.data.updated]);
+                }
+      
+                // Update the logs and UI state
+                setCancelLog(cancelLogArray);
+                setShowCancelLog(true);
+                setShowExternalLog(false);
+                setShowFlagLog(false);
+                setShowPostLog(false);
+      
+              } catch (error) {
+                console.error(`Error processing order with uuid ${order.orderuuid}:`, error);
+                toast.error(`An error occurred while cancelling the order with uuid ${order.orderuuid}`);
               }
+            }
+      
+            // Check if any order cancellation returned "Not found" or other errors
+            let validateResponse = "false";
+            cancelLogArray.forEach(element => {
+              if (element.statusResponse === "Not found" || element.statusResponse !== "OK") {
+                console.log("The order was not updated in Netlife: ", element.statusResponse);
+                validateResponse = "true";
+              }
+            });
+      
+            console.log('validateResponse', validateResponse);
+            if (validateResponse === "true"){
+              toast.error("Not all orders was updated in Netlife. Check 'Cancel Log' for more info");
+            }  else {
+              toast.success("Successfully canceled all orders");
+            }
+      
+            setLoadingmethod(false);
           } catch (error) {
-              console.error('Error cancelling orders:', error);
-              toast.error('An error occurred while cancelling the orders');
-              setLoadingmethod(false);
+            console.error('Error cancelling orders:', error);
+            toast.error('An error occurred while cancelling the orders');
+            setLoadingmethod(false);
           }
+          // try {
+          //     // Use Promise.all to handle multiple requests concurrently
+          //     const responses = await Promise.all(selectedData.map(async (order) => {
+          //         console.log('order', order.orderuuid);
+          //         const cancelResponse = await axios.post(`${ENV.API_URL}api/cancel`, {
+          //             orderuuid: order.orderuuid
+          //         }, {
+          //             headers: {
+          //                 Authorization: `Admin ${token}`,
+          //                 'Content-Type': 'application/json',
+          //             }
+          //         });
+          //         console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
+          //          // Update netlife through REST API
+          //         //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+          //          console.log('order.orderuuid', order.orderuuid);
+          //          try {
+          //           console.log('sending orderuuid to netlife api with status 99: ');
+          //           const statusResponse = await axios.post(
+          //             '/api/index.php/rest/netlife/orderstatus', {
+          //               orderuuid: order.orderuuid,
+          //               // orderuuid: order_uuid, // change to order.orderuiid when in production mode
+          //               status: 99,
+          //               portaluuid: order.portaluuid
+          //             } , {
+          //               headers: {
+          //                 Authorization: `Admin ${token}`,
+          //                 'Content-Type': 'application/json',
+          //               },
+          //             }
+          //           );
+          //           // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+          //           // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);      
+          //           return { cancelResponse: cancelResponse, statusResponse: statusResponse.data };
+          //         } catch (error) {
+          //           console.error('Error fetching news:', error);
+          //         }
+                    
+          //     }));
+          //     // Handle responses if necessary
+          //     console.log('All orders cancelled successfully:', responses);
+
+          //     const cancelLogArray: CancelLogEntry[] = [];
+          //     responses.forEach((element: any) => {
+          //         // console.log('cancelresponse', element?.cancelResponse);
+          //         // console.log('statusResponse', element?.statusResponse);
+
+          //         const logEntry: CancelLogEntry = {
+          //           cancelResponse: element?.cancelResponse ? {
+          //             message: element.cancelResponse.data.message,
+          //             statuscode: element.cancelResponse.data.statuscode,
+          //             orderuuid: element.cancelResponse.data.updated,
+          //             timestamp: element.cancelResponse.data.timestamp,
+          //             updated: element.cancelResponse.data.updated
+          //           } : undefined,
+          //           statusResponse: '', 
+          //         };
+
+          //         if (element?.statusResponse?.result.result === "OK") {
+          //           console.log('statusresponse', element?.statusResponse.result);
+          //           logEntry.statusResponse = element?.statusResponse.result.result || "";
+          //         } else {
+          //           console.log('statusresponse', element?.statusResponse?.result.message);
+          //           logEntry.statusResponse = element?.statusResponse?.result.message || "";
+          //         }
+          //         cancelLogArray.push(logEntry);
+          //         // console.log('logEntry', logEntry);
+          //         // console.log('cancelLogArray', cancelLogArray);
+
+          //         // Mark table row as green if statuscode = 200 and result is "OK"
+          //         if (element.cancelResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
+          //           setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.cancelResponse.data.updated]);
+          //         }
+                
+          //         setCancelLog(cancelLogArray);
+          //         setShowCancelLog(true);
+          //         setShowExternalLog(false);
+          //         setShowFlagLog(false);
+          //         setShowPostLog(false);
+          //         // fetchData();
+          //         setLoadingmethod(false);
+          //     });
+
+          //     // Check if any data in response is NOT FOUND from netlifes API
+          //     let validateResponse = "";
+          //     cancelLogArray.forEach(element => { 
+          //       console.log(element.statusResponse);
+          //       if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
+          //         validateResponse = "true";
+          //       }
+          //     });
+
+          //     if (validateResponse === "true"){
+          //       toast.error("Not all orders was updated in Netlife. Check 'Cancel Log' for more info");
+          //     }  else {
+          //       toast.success("Successfully cancelled all orders");
+          //     }
+          // } catch (error) {
+          //     console.error('Error cancelling orders:', error);
+          //     toast.error('An error occurred while cancelling the orders');
+          //     setLoadingmethod(false);
+          // }
         }
       }
 
@@ -590,108 +687,206 @@ const Index = () => {
           setLoadingmethod(true);
           // Update net_orders
           try {
-              // Use Promise.all to handle multiple requests concurrently
-              const responses = await Promise.all(selectedData.map(async (order) => {
-                  console.log('order', order.orderuuid);
-                  const postResponse = await axios.post(`${ENV.API_URL}api/post`, {
-                      orderuuid: order.orderuuid
-                  }, {
-                      headers: {
-                          Authorization: `Admin ${token}`,
-                          'Content-Type': 'application/json',
-                      }
-                  });
-                  console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
-                   // Update netlife through REST API
-                  //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
-                   
-                   try {
-                    console.log('sending orderuuid to netlife api with status 9: ');
-                    const statusResponse = await axios.post(
-                      '/api/index.php/rest/netlife/orderstatus', {
-                        orderuuid: order.orderuuid,
-                        // orderuuid: order_uuid, // change to order.orderuiid when in production mode
-                        status: 9,
-                        portaluuid: order.portaluuid
-                      } , {
-                        headers: {
-                          Authorization: `Admin ${token}`,
-                          'Content-Type': 'application/json',
-                        },
-                      }
-                    );
-                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
-                    
-                    return { postResponse: postResponse, statusResponse: statusResponse.data };
-                  } catch (error) {
-                    console.error('Error changing status in netlife:', error);
+            const postLogArray = [];
+          
+            // Loop to process each order 
+            for (const order of selectedData) {
+              console.log('order', order.orderuuid);
+              
+              // Post to API (our database)
+              try {
+                const postResponse = await axios.post(`${ENV.API_URL}api/post`, {
+                  orderuuid: order.orderuuid
+                }, {
+                  headers: {
+                    Authorization: `Admin ${token}`,
+                    'Content-Type': 'application/json',
                   }
-                    
-              }));
-              // Handle responses if necessary
-              console.log('All orders posted successfully:', responses);
-              const postLogArray: PostLogEntry[] = [];
-              responses.forEach((element: any) => {
-                  console.log('postResponse', element?.postResponse);
-                  console.log('statusResponse', element?.statusResponse);
+                });
+                console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
+                // let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+                // Update netlife through REST API
+                // console.log('sending orderuuid to netlife api with status 9: ');
+                const statusResponse = await axios.post('/api/index.php/rest/netlife/orderstatus', {
+                  orderuuid: order.orderuuid,
+                  // orderuuid: order_uuid, // Change when running in dev mode
+                  status: 9,
+                  portaluuid: order.portaluuid
+                }, {
+                  headers: {
+                    Authorization: `Admin ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+          
+                // Process the responses 
+                const logEntry = {
+                  postResponse: postResponse ? {
+                    message: postResponse.data.message,
+                    statuscode: postResponse.data.statuscode,
+                    orderuuid: postResponse.data.updated,
+                    timestamp: postResponse.data.timestamp,
+                    updated: postResponse.data.updated
+                  } : undefined,
+                  statusResponse: ''
+                };
+          
+                if (statusResponse?.data?.result?.result === "OK") {
+                  logEntry.statusResponse = statusResponse?.data?.result?.result || "";
+                } else {
+                  logEntry.statusResponse = statusResponse?.data?.result?.message || "";
+                }
+          
+                postLogArray.push(logEntry);
+          
+                // Mark the row green if updated correctly in Netlife and our DB
+                if (postResponse.data.statuscode === 200 && statusResponse?.data?.result?.result === "OK") {
+                  setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, postResponse.data.updated]);
+                }
+          
+                setPostLog(postLogArray);
+                setShowPostLog(true);
+                setShowExternalLog(false);
+                setShowFlagLog(false);
+                setShowCancelLog(false);
+          
+                // Check if any data in response is NOT FOUND
+                if (logEntry.statusResponse === "Not found" || logEntry.statusResponse !== "OK") {
+                  toast.error("Not all orders were updated in Netlife. Check 'Post Log' for more info");
+                } else {
+                  console.log("Order '" + order.orderuuid + "' was succesffully updated in Netlife");
+                }
+              } catch (error) {
+                console.error(`Error processing order with uuid ${order.orderuuid}:`, error);
+                toast.error(`An error occurred while posting the order with uuid ${order.orderuuid}`);
+              }
+            }
 
-                  const logEntry: PostLogEntry = {
-                    postResponse: element?.postResponse ? {
-                      message: element.postResponse.data.message,
-                      statuscode: element.postResponse.data.statuscode,
-                      orderuuid: element.postResponse.data.updated,
-                      timestamp: element.postResponse.data.timestamp,
-                      updated: element.postResponse.data.updated
-                    } : undefined,
-                    statusResponse: '', 
-                  };
-
-                  if (element?.statusResponse?.result.result === "OK") {
-                    console.log('statusresponse', element?.statusResponse?.result);
-                    logEntry.statusResponse = element?.statusResponse?.result.result || "";
-                  } else {
-                    console.log('statusresponse', element?.statusResponse?.result.message);
-                    logEntry.statusResponse = element?.statusResponse?.result.message || "";
-                  }
-                  postLogArray.push(logEntry);
-
-                  // Mark table row as green if statuscode = 200 and result is "OK"
-                  if (element.postResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
-                    console.log("OK!!!");
-                    setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.postResponse.data.updated]);
-                  }
-                
-                  setPostLog(postLogArray);
-                  setShowPostLog(true);
-                  setShowExternalLog(false);
-                  setShowFlagLog(false);
-                  setShowCancelLog(false);
-                  // fetchData();
-                  setLoadingmethod(false);
-              });
-
-              // Check if any data in response is NOT FOUND from netlifes API
-              let validateResponse = "";
+              // Check if any data in response is NOT found from netlifes API
+              let validateResponse = "false";
               postLogArray.forEach(element => { 
-                console.log(element.statusResponse);
                 if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
+                  console.log("The order was not updated in Netlife: ", element.statusResponse);
                   validateResponse = "true";
                 }
               });
-
+              console.log('validateResponse', validateResponse);
               if (validateResponse === "true"){
                 toast.error("Not all orders was updated in Netlife. Check 'Post Log' for more info");
               }  else {
                 toast.success("Successfully posted all orders");
               }
-              
-              // setCancelLog(cancelLog);
+            // toast.success("Successfully posted the order");
+            setLoadingmethod(false);
           } catch (error) {
-              console.error('Error posting orders:', error);
-              toast.error('An error occurred while posting the orders');
-              setLoadingmethod(false);
+            console.error('Error posting orders:', error);
+            toast.error('An error occurred while posting the orders');
+            setLoadingmethod(false);
           }
+          // try {
+          //     // Use Promise.all to handle multiple requests concurrently
+          //     const responses = await Promise.all(selectedData.map(async (order) => {
+          //         console.log('order', order.orderuuid);
+          //         const postResponse = await axios.post(`${ENV.API_URL}api/post`, {
+          //             orderuuid: order.orderuuid
+          //         }, {
+          //             headers: {
+          //                 Authorization: `Admin ${token}`,
+          //                 'Content-Type': 'application/json',
+          //             }
+          //         });
+          //         console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
+          //          // Update netlife through REST API
+          //         //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
+          //          try {
+          //           console.log('sending orderuuid to netlife api with status 9: ');
+          //           const statusResponse = await axios.post(
+          //             '/api/index.php/rest/netlife/orderstatus', {
+          //               orderuuid: order.orderuuid,
+          //               // orderuuid: order_uuid, // change to order.orderuiid when in production mode
+          //               status: 9,
+          //               portaluuid: order.portaluuid
+          //             } , {
+          //               headers: {
+          //                 Authorization: `Admin ${token}`,
+          //                 'Content-Type': 'application/json',
+          //               },
+          //             }
+          //           );
+          //           console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+          //           console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    
+          //           return { postResponse: postResponse, statusResponse: statusResponse.data };
+          //         } catch (error) {
+          //           console.error('Error changing status in netlife:', error);
+          //         }
+                    
+          //     }));
+          //     // Handle responses if necessary
+          //     console.log('All orders posted successfully:', responses);
+          //     const postLogArray: PostLogEntry[] = [];
+          //     responses.forEach((element: any) => {
+          //         console.log('postResponse', element?.postResponse);
+          //         console.log('statusResponse', element?.statusResponse);
+
+          //         const logEntry: PostLogEntry = {
+          //           postResponse: element?.postResponse ? {
+          //             message: element.postResponse.data.message,
+          //             statuscode: element.postResponse.data.statuscode,
+          //             orderuuid: element.postResponse.data.updated,
+          //             timestamp: element.postResponse.data.timestamp,
+          //             updated: element.postResponse.data.updated
+          //           } : undefined,
+          //           statusResponse: '', 
+          //         };
+
+          //         if (element?.statusResponse?.result.result === "OK") {
+          //           console.log('statusresponse', element?.statusResponse?.result);
+          //           logEntry.statusResponse = element?.statusResponse?.result.result || "";
+          //         } else {
+          //           console.log('statusresponse', element?.statusResponse?.result.message);
+          //           logEntry.statusResponse = element?.statusResponse?.result.message || "";
+          //         }
+          //         postLogArray.push(logEntry);
+
+          //         // Mark table row as green if statuscode = 200 and result is "OK"
+          //         if (element.postResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
+          //           console.log("OK!!!");
+          //           setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.postResponse.data.updated]);
+          //         }
+                
+          //         setPostLog(postLogArray);
+          //         setShowPostLog(true);
+          //         setShowExternalLog(false);
+          //         setShowFlagLog(false);
+          //         setShowCancelLog(false);
+          //         // fetchData();
+          //         setLoadingmethod(false);
+          //     });
+
+          //     // Check if any data in response is NOT FOUND from netlifes API
+          //     let validateResponse = "";
+          //     postLogArray.forEach(element => { 
+          //       console.log(element.statusResponse);
+          //       if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
+          //         validateResponse = "true";
+          //       }
+          //     });
+
+          //     if (validateResponse === "true"){
+          //       toast.error("Not all orders was updated in Netlife. Check 'Post Log' for more info");
+          //     }  else {
+          //       toast.success("Successfully posted all orders");
+          //     }
+              
+          //     // setCancelLog(cancelLog);
+          // } catch (error) {
+          //     console.error('Error posting orders:', error);
+          //     toast.error('An error occurred while posting the orders');
+          //     setLoadingmethod(false);
+          // }
         }
       }
 
@@ -1029,7 +1224,7 @@ const Index = () => {
                           <tr className={`table-row ${markRowGreen.includes(item.orderuuid) ? "markasgreen-row" : selectedData.some(i => i.orderuuid === item.orderuuid) ? "selected-row" : ""}`} key={item.orderuuid}
                               onClick={(e) => {
                                 const target = e.target as HTMLTableCellElement; 
-                                if (target.cellIndex < 5) {
+                                if (target.cellIndex < 6) {
                                   addRow(item); // Only trigger addRow for the first 5 cells
                                 }
                               }}>
