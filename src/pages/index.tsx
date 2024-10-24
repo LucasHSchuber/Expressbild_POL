@@ -1085,7 +1085,13 @@ const Index = () => {
                     <FontAwesomeIcon icon={faTimes} title="Remove Order" className='delete-selecteddata-button' onClick={() => deleteRow(item)} />
                     <h6 className='mx-3'>{item.orderuuid.length > 15 ? item.orderuuid.substring(0,15) + "..." : item.orderuuid.length}</h6>
                     <h6>{getPortalName(item.portaluuid)}</h6>
-                    <h6 className='mx-3'>{new Date(item.inserted).toLocaleString().substring(5,10)}</h6>
+                    <h6 className='mx-3'>{item.inserted && (() => {
+                          const date = new Date(item.inserted);
+                          const day = String(date.getDate()).padStart(2, '0'); 
+                          const month = String(date.getMonth() + 1).padStart(2, '0'); 
+                          return `${day}/${month}`; 
+                        })()}
+                    </h6>
                     {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' /> : "-"}
                   </div>
                 ))}
