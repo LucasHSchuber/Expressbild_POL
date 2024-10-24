@@ -620,12 +620,12 @@ const Index = () => {
                         },
                       }
                     );
-                    // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-                    // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
+                    console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
+                    console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
                     
                     return { postResponse: postResponse, statusResponse: statusResponse.data };
                   } catch (error) {
-                    console.error('Error fetching news:', error);
+                    console.error('Error changing status in netlife:', error);
                   }
                     
               }));
@@ -633,8 +633,8 @@ const Index = () => {
               console.log('All orders posted successfully:', responses);
               const postLogArray: PostLogEntry[] = [];
               responses.forEach((element: any) => {
-                  // console.log('postResponse', element?.postResponse);
-                  // console.log('statusResponse', element?.statusResponse);
+                  console.log('postResponse', element?.postResponse);
+                  console.log('statusResponse', element?.statusResponse);
 
                   const logEntry: PostLogEntry = {
                     postResponse: element?.postResponse ? {
@@ -648,8 +648,8 @@ const Index = () => {
                   };
 
                   if (element?.statusResponse?.result.result === "OK") {
-                    console.log('statusresponse', element?.statusResponse.result);
-                    logEntry.statusResponse = element?.statusResponse.result.result || "";
+                    console.log('statusresponse', element?.statusResponse?.result);
+                    logEntry.statusResponse = element?.statusResponse?.result.result || "";
                   } else {
                     console.log('statusresponse', element?.statusResponse?.result.message);
                     logEntry.statusResponse = element?.statusResponse?.result.message || "";
