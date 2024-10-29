@@ -216,49 +216,77 @@ const Index = () => {
 
 
 
-      const openNetlife = (item: DataArray) => {
-        let url = "";
-        switch (item.portaluuid) {
-          case "2dba368b-6205-11e1-b101-0025901d40ea": // sweden
-            url = "shop.expressbild.se";
-            break;
-          case "1cfa0ec6-d7de-11e1-b101-0025901d40ea": // finland
-            url = "shop.expresskuva.fi";
-            break;
-          case "8d944c93-9de4-11e2-882a-0025901d40ea": // denmark
-            url = "shop.billedexpressen.dk";
-            break;
-          case "f41d5c48-5af3-94db-f32d-3a51656b2c53": // norway
-            url = "shop.fotoexpressen.no";
-            break;
-          case "da399c45-3cf2-11ea-b287-ac1f6b419120": // germany
-            url = "shop.bildexpressen.de";
-            break;
-          case "a535027b-2240-11e0-910e-001676d1636c": // studio express sweden
-            url = "shop.studioexpress.se";
-            break;
-          case "a0c01dac-d749-11ec-b288-ac1f6b419120": // studio express finland
-            url = "shop.studioexpresskuva.fi";
-            break;
-          case "a0aa6525-4435-11ea-b287-ac1f6b419120": // studio express denmark
-            url = "shop.studioexpressen.dk";
-            break;
-          case "9a40c7df-436a-11ea-b287-ac1f6b419120": // studio express norway
-            url = "shop.studioexpressen.no";
-            break;
+      // const openNetlife = (item: DataArray) => {
+      //   let url = "";
+      //   switch (item.portaluuid) {
+      //     case "2dba368b-6205-11e1-b101-0025901d40ea": // sweden
+      //       url = "shop.expressbild.se";
+      //       break;
+      //     case "1cfa0ec6-d7de-11e1-b101-0025901d40ea": // finland
+      //       url = "shop.expresskuva.fi";
+      //       break;
+      //     case "8d944c93-9de4-11e2-882a-0025901d40ea": // denmark
+      //       url = "shop.billedexpressen.dk";
+      //       break;
+      //     case "f41d5c48-5af3-94db-f32d-3a51656b2c53": // norway
+      //       url = "shop.fotoexpressen.no";
+      //       break;
+      //     case "da399c45-3cf2-11ea-b287-ac1f6b419120": // germany
+      //       url = "shop.bildexpressen.de";
+      //       break;
+      //     case "a535027b-2240-11e0-910e-001676d1636c": // studio express sweden
+      //       url = "shop.studioexpress.se";
+      //       break;
+      //     case "a0c01dac-d749-11ec-b288-ac1f6b419120": // studio express finland
+      //       url = "shop.studioexpresskuva.fi";
+      //       break;
+      //     case "a0aa6525-4435-11ea-b287-ac1f6b419120": // studio express denmark
+      //       url = "shop.studioexpressen.dk";
+      //       break;
+      //     case "9a40c7df-436a-11ea-b287-ac1f6b419120": // studio express norway
+      //       url = "shop.studioexpressen.no";
+      //       break;
+      //     default:
+      //       console.error('Portal UUID not found');
+      //       return;
+      //   }
+
+      //   const link = `https://${url}/admin/portal/orders/order.php?uuid=${item.orderuuid}`;
+      //   window.open(link, "_blank");
+      // };
+
+      // const openPicReturn = (item: DataArray) => {
+      //   const link = `https://backend.expressbild.org/index.php/net/returns/load_order/${item.orderuuid}`;
+      //   window.open(link, "_blank");
+      // };
+
+      const getPortalUrl = (portaluuid: any) => {
+        switch (portaluuid) {
+          case "2dba368b-6205-11e1-b101-0025901d40ea":
+            return "shop.expressbild.se";
+          case "1cfa0ec6-d7de-11e1-b101-0025901d40ea":
+            return "shop.expresskuva.fi";
+          case "8d944c93-9de4-11e2-882a-0025901d40ea":
+            return "shop.billedexpressen.dk";
+          case "f41d5c48-5af3-94db-f32d-3a51656b2c53":
+            return "shop.fotoexpressen.no";
+          case "da399c45-3cf2-11ea-b287-ac1f6b419120":
+            return "shop.bildexpressen.de";
+          case "a535027b-2240-11e0-910e-001676d1636c":
+            return "shop.studioexpress.se";
+          case "a0c01dac-d749-11ec-b288-ac1f6b419120":
+            return "shop.studioexpresskuva.fi";
+          case "a0aa6525-4435-11ea-b287-ac1f6b419120":
+            return "shop.studioexpressen.dk";
+          case "9a40c7df-436a-11ea-b287-ac1f6b419120":
+            return "shop.studioexpressen.no";
           default:
-            console.error('Portal UUID not found');
-            return;
+            console.error("Portal UUID not found");
+            return "";
         }
-
-        const link = `https://${url}/admin/portal/orders/order.php?uuid=${item.orderuuid}`;
-        window.open(link, "_blank");
       };
 
-      const openPicReturn = (item: DataArray) => {
-        const link = `https://backend.expressbild.org/index.php/net/returns/load_order/${item.orderuuid}`;
-        window.open(link, "_blank");
-      };
+    
 
 
 
@@ -1251,8 +1279,28 @@ const Index = () => {
                               </td>
 
                               <td>{getOriginatingPrefix(item.originating)}</td>
-                              <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' /></button></td>
-                              <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td>
+                              {/* <td className='table-button' title='To Netlife' onClick={() => openNetlife(item)}><button className='table-button'><FontAwesomeIcon icon={faN} title="To Netlife" className='table-icon' /></button></td> */}
+                              <td className="" title="To Netlife">
+                                <a
+                                  href={`https://${getPortalUrl(item.portaluuid)}/admin/portal/orders/order.php?uuid=${item.orderuuid}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="table-button a-tag-button"
+                                >
+                                  <FontAwesomeIcon icon={faN} title="To Netlife" className="table-icon" />
+                                </a>
+                              </td>
+                              {/* <td className='table-button' title='To Pic Returns' onClick={() => openPicReturn(item)}><button className='table-button'><FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  /></button></td> */}
+                              <td className="" title="To Pic Returns">
+                                <a
+                                  href={`https://backend.expressbild.org/index.php/net/returns/load_order/${item.orderuuid}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="table-button a-tag-button"
+                                >
+                                  <FontAwesomeIcon icon={faCameraRetro} title="To Pic Returns" className='table-icon'  />
+                                </a>
+                              </td>
                               <td className='table-button' title='External' onClick={() => runExternal(item)}><button className='table-button '><FontAwesomeIcon icon={faSquareUpRight} title="External" className='table-icon' /></button></td>
                               {/* <td className='table-button' title='Flag'><button className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button></td> */}
                               <td className={`${item.pol_flag ? "flagged-td": "table-button"}`} onClick={!item.pol_flag ? () => runFlagSingleOrder(item) : undefined}> {item.pol_flag ? <FontAwesomeIcon icon={faFlag} title="Flagged Order" className='table-icon table-icon-flag'  /> : <button  className='table-button table-button-flag'><FontAwesomeIcon icon={faFlag} title="Flag" className='table-icon'  /></button>} </td>
