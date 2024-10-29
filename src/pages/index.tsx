@@ -161,31 +161,31 @@ const Index = () => {
         let portalname = "";
         switch (portal) {
           case "2dba368b-6205-11e1-b101-0025901d40ea": // sweden
-          portalname = "ExpressBild SWE";
+          portalname = "Expressbild";
             break;
           case "1cfa0ec6-d7de-11e1-b101-0025901d40ea": // finland
-          portalname = "ExpressBild FIN";
+          portalname = "Express-Kuva";
             break;
           case "8d944c93-9de4-11e2-882a-0025901d40ea": // denmark
-          portalname = "ExpressBild DEN";
+          portalname = "Billed-Expressen";
             break;
           case "f41d5c48-5af3-94db-f32d-3a51656b2c53": // norway
-          portalname = "ExpressBild NOR";
+          portalname = "Foto-Expressen";
             break;
           case "da399c45-3cf2-11ea-b287-ac1f6b419120": // germany
           portalname = "ExpressBild GER";
             break;
           case "a535027b-2240-11e0-910e-001676d1636c": // studio express sweden
-          portalname = "StudioExpress SWE";
+          portalname = "Studioexpress SE";
             break;
           case "a0c01dac-d749-11ec-b288-ac1f6b419120": // studio express finland
-          portalname = "StudioExpress FIN";
+          portalname = "Studioexpress FI";
             break;
           case "a0aa6525-4435-11ea-b287-ac1f6b419120": // studio express denmark
-          portalname = "StudioExpress DEN";
+          portalname = "Studioexpress DK";
             break;
           case "9a40c7df-436a-11ea-b287-ac1f6b419120": // studio express norway
-          portalname = "StudioExpress NOR";
+          portalname = "Studioexpress NO";
             break;
           default:
             console.error('Portal not found');
@@ -334,7 +334,7 @@ const Index = () => {
               setShowExternalLog(false);
               setShowCancelLog(false);
               setShowPostLog(false);
-              // fetchData();
+              setSelectedData([]);
               setLoadingmethod(false);
           } catch (error) {
               console.error('Error flagging orders:', error);
@@ -385,8 +385,8 @@ const Index = () => {
               setShowExternalLog(false);
               setShowCancelLog(false);
               setShowPostLog(false);
+              setSelectedData([]);
               setLoadingmethod(false);
-              // fetchData();
           } catch (error) {
               console.error('Error flagging order:', error);
               toast.error('An error occurred while flagging the order');
@@ -435,7 +435,7 @@ const Index = () => {
               setShowCancelLog(false);
               setShowFlagLog(false);
               setShowPostLog(false);
-              // fetchData();
+              setSelectedData([]);
               setLoadingmethod(false);
           } catch (error) {
               console.error('Error when running external on orders:', error);
@@ -532,7 +532,7 @@ const Index = () => {
                 setShowExternalLog(false);
                 setShowFlagLog(false);
                 setShowPostLog(false);
-      
+              
               } catch (error) {
                 console.error(`Error processing order with uuid ${order.orderuuid}:`, error);
                 toast.error(`An error occurred while cancelling the order with uuid ${order.orderuuid}`);
@@ -554,8 +554,9 @@ const Index = () => {
             }  else {
               toast.success("Successfully canceled all orders");
             }
-      
+            
             setLoadingmethod(false);
+            setSelectedData([]);
           } catch (error) {
             console.error('Error cancelling orders:', error);
             toast.error('An error occurred while cancelling the orders');
@@ -780,6 +781,7 @@ const Index = () => {
               }
             // toast.success("Successfully posted the order");
             setLoadingmethod(false);
+            setSelectedData([]);
           } catch (error) {
             console.error('Error posting orders:', error);
             toast.error('An error occurred while posting the orders');
@@ -1069,6 +1071,10 @@ const Index = () => {
         console.log('fontsize', fontSize);
       };
 
+
+      useEffect(() => {
+        console.log('selectedData', selectedData);
+      }, [selectedData]);
 
 
   return (
