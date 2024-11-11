@@ -425,7 +425,7 @@ const Index = () => {
 
 
 
-      //  --------------- RUN EXTERNAL METHOD --------------
+      //  --------------- RUN EXTERNAL METHOD (one order) --------------
 
       const runExternal = async (item: DataArray) => {
         console.log("EXTERNAL method triggered...");
@@ -451,7 +451,7 @@ const Index = () => {
                         'Content-Type': 'application/json',
                     }
                 });
-              console.log('All orders ran external successfully:', response);
+              console.log('Orders ran external successfully:', response);
               // Mark table row as green if statuscode = 200
               if (response.data.statuscode === 200) {
                 setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, response.data.updated]);
@@ -471,6 +471,65 @@ const Index = () => {
               setLoadingmethod(false);
           }
       }
+      }
+
+
+
+      //  --------------- RUN EXTERNAL METHOD (multiple orders) --------------
+
+      const runExternalMultpleOrders = async () => {
+        
+        console.log("runFlagMultpleOrders method triggered...");
+        const confirm = window.confirm(`Are you sure you want to run EXTERNAL on ${selectedData.length} orders?`);
+        if (!confirm){
+          return;
+        } else {
+          const tokenResponse = await validateToken();
+          console.log('tokenResponse', tokenResponse);
+          if (tokenResponse === null || tokenResponse === ""){
+            toast.error("Invalid or missing token!");
+            return;
+          }
+
+          setLoadingmethod(true);
+          
+          try {
+              // Use Promise.all to handle multiple requests concurrently
+              const responses = await Promise.all(selectedData.map(order => {
+                  console.log('order', order.orderuuid);
+                  return axios.post(`${ENV.API_URL}api/fixed`, {
+                      orderuuid: order.orderuuid
+                  }, {
+                      headers: {
+                          Authorization: `Admin ${token}`,
+                          'Content-Type': 'application/json',
+                      }
+                  });
+              }));
+
+              // Handle responses if necessary
+              console.log('All orders ran external successfully:', responses);
+              const externalLog = responses.map(data => data.data);
+              // Mark table row as green if statuscode = 200
+              responses.forEach((data) => {
+                if (data.data.statuscode === 200) {
+                  setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, data.data.updated]);
+                }
+              });              
+              toast.success("Successfully ran external on all orders");
+              setExternalLog(externalLog);
+              setShowExternalLog(true);
+              setShowFlagLog(false);
+              setShowCancelLog(false);
+              setShowPostLog(false);
+              setSelectedData([]);
+              setLoadingmethod(false);
+          } catch (error) {
+              console.error('Error running external on orders:', error);
+              toast.error('An error occurred while running external on orders');
+              setLoadingmethod(false);
+          }
+        }
       }
 
 
@@ -1265,7 +1324,7 @@ const Index = () => {
                               <td >
                                 {item.paid > 0 ? <FontAwesomeIcon icon={faCircle} className='status-green' title="Paid" /> : item.cnt > 0 ? <FontAwesomeIcon icon={faCircle} className='status-yellow' title="Returned" /> : (item.cnt === null || item.cnt === 0 || item.paid === 0)  ? <FontAwesomeIcon icon={faCircle} className='status-red' title="None" /> : "-"}
                               </td>
-                              <td title={item.orderuuid}>{item.orderuuid.length > 12 ? item.orderuuid.substring(0, 12) + '...' : item.orderuuid}</td>
+                              <td title={item.orderuuid}>{item.orderuuid}</td>
                               <td title={item.subjectname}>{item.subjectname.length > 10 ? item.subjectname.substring(0, 10) + '...' : item.subjectname}</td>
                               <td title={getPortalName(item.portaluuid)}>{getPortalName(item.portaluuid)}</td>
                               {/* <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td> */}
@@ -1347,9 +1406,10 @@ const Index = () => {
               {/* <h6 className='delete-all-button' title='Remove All Orders' onClick={() => deleteAll()}>Remove All</h6> */}
               <hr className='my-4' style={{border: "0.5px solid rgba(255, 255, 255, 0.1)"}}></hr>
               <div>
-                <button className='button' title='Cancel orders' onClick={() => runCancel()}>Cancel {selectedData.length} orders</button>
-                <button className='button mx-2' title='Post orders' onClick={() => runPost()}>Post {selectedData.length} orders</button>
-                <button className='button' title='Flag orders' onClick={() => runFlag()}>Flag {selectedData.length} orders</button>
+                <button className='button mr-1' title='Cancel orders' onClick={() => runCancel()}>Cancel All</button>
+                <button className='button mr-1' title='Post orders' onClick={() => runPost()}>Post All</button>
+                <button className='button mr-1' title='Flag orders' onClick={() => runFlag()}>Flag All</button>
+                <button className='button' title='External orders' onClick={() => runExternalMultpleOrders()}>External All</button>
               </div>
           </div>
           )}

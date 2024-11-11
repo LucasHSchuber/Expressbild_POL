@@ -1,4 +1,5 @@
 # POL - Proof Of Life 
+# Lucas H. Schuber
 # Express Bild
 
 
@@ -11,6 +12,7 @@ NEED!
 
 RUN!
 - Clone repo
+- cd *my_repo*
 - npm install
 
  Frontend:
