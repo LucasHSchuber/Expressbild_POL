@@ -2,11 +2,12 @@
 # Lucas H. Schuber
 # Express Bild
 
-
 IMPORTANT!
 - When running in dev mode with test database change order.orderuuid to order_uuid in CANCEL METHOD and POST METHOD
 
-NEED!
+
+
+!Hidden/Important files
 - env.js file in root
 - dbConfig.js in server folder
 
@@ -21,6 +22,7 @@ RUN!
  Backend:
 - cd server
 - "node server.js"
+
 
 OBS!
 - check ports while running both server and client instances

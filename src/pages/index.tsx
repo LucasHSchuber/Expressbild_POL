@@ -12,8 +12,6 @@ import { faTimes, faFlag, faN, faCameraRetro, faCircle, faAngleDown, faAngleUp, 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ENV from '../../env.js'; 
-// console.log('ENV', ENV);
-//import interfaces
 import { DataArray, FlagLogEntry, ExternalLogEntry, CancelLogEntry, PostLogEntry,  } from '../interfaces/interfaces.js';
 
 
@@ -151,6 +149,7 @@ const Index = () => {
       }, [token]);
 
 
+
       // ---------- GETTING ORGIINATING PREFIX (by splitting strings and returning first value in array) -------------
 
       const getOriginatingPrefix = (originating: string) =>{
@@ -215,50 +214,6 @@ const Index = () => {
       }
 
 
-
-      // const openNetlife = (item: DataArray) => {
-      //   let url = "";
-      //   switch (item.portaluuid) {
-      //     case "2dba368b-6205-11e1-b101-0025901d40ea": // sweden
-      //       url = "shop.expressbild.se";
-      //       break;
-      //     case "1cfa0ec6-d7de-11e1-b101-0025901d40ea": // finland
-      //       url = "shop.expresskuva.fi";
-      //       break;
-      //     case "8d944c93-9de4-11e2-882a-0025901d40ea": // denmark
-      //       url = "shop.billedexpressen.dk";
-      //       break;
-      //     case "f41d5c48-5af3-94db-f32d-3a51656b2c53": // norway
-      //       url = "shop.fotoexpressen.no";
-      //       break;
-      //     case "da399c45-3cf2-11ea-b287-ac1f6b419120": // germany
-      //       url = "shop.bildexpressen.de";
-      //       break;
-      //     case "a535027b-2240-11e0-910e-001676d1636c": // studio express sweden
-      //       url = "shop.studioexpress.se";
-      //       break;
-      //     case "a0c01dac-d749-11ec-b288-ac1f6b419120": // studio express finland
-      //       url = "shop.studioexpresskuva.fi";
-      //       break;
-      //     case "a0aa6525-4435-11ea-b287-ac1f6b419120": // studio express denmark
-      //       url = "shop.studioexpressen.dk";
-      //       break;
-      //     case "9a40c7df-436a-11ea-b287-ac1f6b419120": // studio express norway
-      //       url = "shop.studioexpressen.no";
-      //       break;
-      //     default:
-      //       console.error('Portal UUID not found');
-      //       return;
-      //   }
-
-      //   const link = `https://${url}/admin/portal/orders/order.php?uuid=${item.orderuuid}`;
-      //   window.open(link, "_blank");
-      // };
-
-      // const openPicReturn = (item: DataArray) => {
-      //   const link = `https://backend.expressbild.org/index.php/net/returns/load_order/${item.orderuuid}`;
-      //   window.open(link, "_blank");
-      // };
 
       const getPortalUrl = (portaluuid: any) => {
         switch (portaluuid) {
@@ -649,108 +604,6 @@ const Index = () => {
             toast.error('An error occurred while cancelling the orders');
             setLoadingmethod(false);
           }
-          // try {
-          //     // Use Promise.all to handle multiple requests concurrently
-          //     const responses = await Promise.all(selectedData.map(async (order) => {
-          //         console.log('order', order.orderuuid);
-          //         const cancelResponse = await axios.post(`${ENV.API_URL}api/cancel`, {
-          //             orderuuid: order.orderuuid
-          //         }, {
-          //             headers: {
-          //                 Authorization: `Admin ${token}`,
-          //                 'Content-Type': 'application/json',
-          //             }
-          //         });
-          //         console.log(`cancelResponse for uuid ${order.orderuuid}`, cancelResponse);
-          //          // Update netlife through REST API
-          //         //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
-          //          console.log('order.orderuuid', order.orderuuid);
-          //          try {
-          //           console.log('sending orderuuid to netlife api with status 99: ');
-          //           const statusResponse = await axios.post(
-          //             '/api/index.php/rest/netlife/orderstatus', {
-          //               orderuuid: order.orderuuid,
-          //               // orderuuid: order_uuid, // change to order.orderuiid when in production mode
-          //               status: 99,
-          //               portaluuid: order.portaluuid
-          //             } , {
-          //               headers: {
-          //                 Authorization: `Admin ${token}`,
-          //                 'Content-Type': 'application/json',
-          //               },
-          //             }
-          //           );
-          //           // console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-          //           // console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);      
-          //           return { cancelResponse: cancelResponse, statusResponse: statusResponse.data };
-          //         } catch (error) {
-          //           console.error('Error fetching news:', error);
-          //         }
-                    
-          //     }));
-          //     // Handle responses if necessary
-          //     console.log('All orders cancelled successfully:', responses);
-
-          //     const cancelLogArray: CancelLogEntry[] = [];
-          //     responses.forEach((element: any) => {
-          //         // console.log('cancelresponse', element?.cancelResponse);
-          //         // console.log('statusResponse', element?.statusResponse);
-
-          //         const logEntry: CancelLogEntry = {
-          //           cancelResponse: element?.cancelResponse ? {
-          //             message: element.cancelResponse.data.message,
-          //             statuscode: element.cancelResponse.data.statuscode,
-          //             orderuuid: element.cancelResponse.data.updated,
-          //             timestamp: element.cancelResponse.data.timestamp,
-          //             updated: element.cancelResponse.data.updated
-          //           } : undefined,
-          //           statusResponse: '', 
-          //         };
-
-          //         if (element?.statusResponse?.result.result === "OK") {
-          //           console.log('statusresponse', element?.statusResponse.result);
-          //           logEntry.statusResponse = element?.statusResponse.result.result || "";
-          //         } else {
-          //           console.log('statusresponse', element?.statusResponse?.result.message);
-          //           logEntry.statusResponse = element?.statusResponse?.result.message || "";
-          //         }
-          //         cancelLogArray.push(logEntry);
-          //         // console.log('logEntry', logEntry);
-          //         // console.log('cancelLogArray', cancelLogArray);
-
-          //         // Mark table row as green if statuscode = 200 and result is "OK"
-          //         if (element.cancelResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
-          //           setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.cancelResponse.data.updated]);
-          //         }
-                
-          //         setCancelLog(cancelLogArray);
-          //         setShowCancelLog(true);
-          //         setShowExternalLog(false);
-          //         setShowFlagLog(false);
-          //         setShowPostLog(false);
-          //         // fetchData();
-          //         setLoadingmethod(false);
-          //     });
-
-          //     // Check if any data in response is NOT FOUND from netlifes API
-          //     let validateResponse = "";
-          //     cancelLogArray.forEach(element => { 
-          //       console.log(element.statusResponse);
-          //       if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
-          //         validateResponse = "true";
-          //       }
-          //     });
-
-          //     if (validateResponse === "true"){
-          //       toast.error("Not all orders was updated in Netlife. Check 'Cancel Log' for more info");
-          //     }  else {
-          //       toast.success("Successfully cancelled all orders");
-          //     }
-          // } catch (error) {
-          //     console.error('Error cancelling orders:', error);
-          //     toast.error('An error occurred while cancelling the orders');
-          //     setLoadingmethod(false);
-          // }
         }
       }
 
@@ -874,108 +727,6 @@ const Index = () => {
             toast.error('An error occurred while posting the orders');
             setLoadingmethod(false);
           }
-          // try {
-          //     // Use Promise.all to handle multiple requests concurrently
-          //     const responses = await Promise.all(selectedData.map(async (order) => {
-          //         console.log('order', order.orderuuid);
-          //         const postResponse = await axios.post(`${ENV.API_URL}api/post`, {
-          //             orderuuid: order.orderuuid
-          //         }, {
-          //             headers: {
-          //                 Authorization: `Admin ${token}`,
-          //                 'Content-Type': 'application/json',
-          //             }
-          //         });
-          //         console.log(`postResponse for uuid ${order.orderuuid}`, postResponse);
-          //          // Update netlife through REST API
-          //         //  let order_uuid = "205e956e-ee7c-43e4-8dce-cd3c9700333a";
-          //          try {
-          //           console.log('sending orderuuid to netlife api with status 9: ');
-          //           const statusResponse = await axios.post(
-          //             '/api/index.php/rest/netlife/orderstatus', {
-          //               orderuuid: order.orderuuid,
-          //               // orderuuid: order_uuid, // change to order.orderuiid when in production mode
-          //               status: 9,
-          //               portaluuid: order.portaluuid
-          //             } , {
-          //               headers: {
-          //                 Authorization: `Admin ${token}`,
-          //                 'Content-Type': 'application/json',
-          //               },
-          //             }
-          //           );
-          //           console.log(`Order StatusResponse: for uuid ${order.orderuuid}`, statusResponse);
-          //           console.log(`Order StatusResponse.data.result for uuid ${order.orderuuid}`, statusResponse.data.result);
-                    
-          //           return { postResponse: postResponse, statusResponse: statusResponse.data };
-          //         } catch (error) {
-          //           console.error('Error changing status in netlife:', error);
-          //         }
-                    
-          //     }));
-          //     // Handle responses if necessary
-          //     console.log('All orders posted successfully:', responses);
-          //     const postLogArray: PostLogEntry[] = [];
-          //     responses.forEach((element: any) => {
-          //         console.log('postResponse', element?.postResponse);
-          //         console.log('statusResponse', element?.statusResponse);
-
-          //         const logEntry: PostLogEntry = {
-          //           postResponse: element?.postResponse ? {
-          //             message: element.postResponse.data.message,
-          //             statuscode: element.postResponse.data.statuscode,
-          //             orderuuid: element.postResponse.data.updated,
-          //             timestamp: element.postResponse.data.timestamp,
-          //             updated: element.postResponse.data.updated
-          //           } : undefined,
-          //           statusResponse: '', 
-          //         };
-
-          //         if (element?.statusResponse?.result.result === "OK") {
-          //           console.log('statusresponse', element?.statusResponse?.result);
-          //           logEntry.statusResponse = element?.statusResponse?.result.result || "";
-          //         } else {
-          //           console.log('statusresponse', element?.statusResponse?.result.message);
-          //           logEntry.statusResponse = element?.statusResponse?.result.message || "";
-          //         }
-          //         postLogArray.push(logEntry);
-
-          //         // Mark table row as green if statuscode = 200 and result is "OK"
-          //         if (element.postResponse.data.statuscode === 200 && element?.statusResponse?.result.result === "OK") {
-          //           console.log("OK!!!");
-          //           setMarkRowGreen((prevMarkRowGreen) => [...prevMarkRowGreen, element.postResponse.data.updated]);
-          //         }
-                
-          //         setPostLog(postLogArray);
-          //         setShowPostLog(true);
-          //         setShowExternalLog(false);
-          //         setShowFlagLog(false);
-          //         setShowCancelLog(false);
-          //         // fetchData();
-          //         setLoadingmethod(false);
-          //     });
-
-          //     // Check if any data in response is NOT FOUND from netlifes API
-          //     let validateResponse = "";
-          //     postLogArray.forEach(element => { 
-          //       console.log(element.statusResponse);
-          //       if (element.statusResponse === "Not found" || element.statusResponse !== "OK"){
-          //         validateResponse = "true";
-          //       }
-          //     });
-
-          //     if (validateResponse === "true"){
-          //       toast.error("Not all orders was updated in Netlife. Check 'Post Log' for more info");
-          //     }  else {
-          //       toast.success("Successfully posted all orders");
-          //     }
-              
-          //     // setCancelLog(cancelLog);
-          // } catch (error) {
-          //     console.error('Error posting orders:', error);
-          //     toast.error('An error occurred while posting the orders');
-          //     setLoadingmethod(false);
-          // }
         }
       }
 
@@ -1318,7 +1069,7 @@ const Index = () => {
                               onClick={(e) => {
                                 const target = e.target as HTMLTableCellElement; 
                                 if (target.cellIndex < 6) {
-                                  addRow(item); // Only trigger addRow for the first 5 cells
+                                  addRow(item); 
                                 }
                               }}>
                               <td >
@@ -1327,7 +1078,7 @@ const Index = () => {
                               <td title={item.orderuuid}>{item.orderuuid}</td>
                               <td title={item.subjectname}>{item.subjectname.length > 10 ? item.subjectname.substring(0, 10) + '...' : item.subjectname}</td>
                               <td title={getPortalName(item.portaluuid)}>{getPortalName(item.portaluuid)}</td>
-                              {/* <td>{new Date(item.inserted).toLocaleString().substring(5,10)}</td> */}
+                          
                               <td>
                                 {item.inserted && (() => {
                                   const date = new Date(item.inserted);
@@ -1562,7 +1313,7 @@ const Index = () => {
     </div>
 
       {loadingMethod &&(        
-      <SpinnerMethod />       
+        <SpinnerMethod />       
        )}
         
       <ToastContainer
